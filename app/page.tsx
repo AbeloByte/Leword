@@ -14,6 +14,7 @@ import { HabitStats } from "@/components/HabitStats";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, LogOut, Search, Sparkles, Filter } from "lucide-react";
 import { toast } from "sonner";
+import { UserNav } from "@/components/UserNav";
 
 export default function HomePage() {
     const { user, loading, signOut } = useAuth();
@@ -157,21 +158,14 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Actions: Flashcards, Add Word, and User Profile */}
+                    <div className="flex items-center gap-2.5">
                         <FlashcardModal
                             words={words}
                             onToggleMastered={handleToggleMastered}
                         />
                         <AddWordDialog onWordAdded={loadWords} />
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => signOut()}
-                            title="Sign Out"
-                            className="text-muted-foreground hover:text-foreground"
-                        >
-                            <LogOut className="h-4 w-4" />
-                        </Button>
+                        <UserNav />
                     </div>
                 </div>
             </header>

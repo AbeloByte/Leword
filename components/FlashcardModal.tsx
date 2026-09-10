@@ -76,11 +76,11 @@ export function FlashcardModal({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2 font-medium">
-                    <Layers className="h-4 w-4 text-violet-600" />
-                    Review Flashcards
-                </Button>
+            <DialogTrigger
+                render={<Button variant="outline" className="gap-2 font-medium" />}
+            >
+                <Layers className="h-4 w-4 text-violet-600" />
+                Review Flashcards
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-[460px] p-6">

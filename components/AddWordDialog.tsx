@@ -160,11 +160,9 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button className="gap-2 shadow-sm font-medium">
-                    <Plus className="h-4 w-4" />
-                    Add Word
-                </Button>
+            <DialogTrigger render={<Button className="gap-2 shadow-sm font-medium" />}>
+                <Plus className="h-4 w-4" />
+                Add Word
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-[500px]">
