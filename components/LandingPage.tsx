@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ import {
     Smartphone,
     Search,
     ShieldCheck,
-    ChevronDown,
+    Plus,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ *
@@ -433,27 +434,51 @@ export function LandingPage() {
             </section>
 
             {/* ---------------- FAQ ---------------- */}
-            <section id="faq" className="scroll-mt-20 px-4 py-20">
-                <div className="mx-auto max-w-2xl space-y-10">
-                    <div className="space-y-3 text-center">
+            <section
+                id="faq"
+                className="scroll-mt-20 border-t bg-muted/30 px-4 py-20"
+            >
+                <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:gap-14">
+                    {/* The heading column sticks while the answers scroll, so
+                        the reader never loses the section they are inside. */}
+                    <div className="space-y-4 md:sticky md:top-24 md:self-start">
                         <p className="text-xs font-semibold tracking-wider text-accent-ink uppercase">
                             FAQ
                         </p>
                         <h2 className="text-3xl font-extrabold tracking-tight">
                             Common questions
                         </h2>
+                        <p className="leading-relaxed text-muted-foreground">
+                            The short answers to what people usually ask before
+                            they sign up.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Still curious?{" "}
+                            <Link
+                                href="/auth"
+                                className="font-semibold text-accent-ink underline underline-offset-4"
+                            >
+                                Try it free
+                            </Link>{" "}
+                            &mdash; it takes about ten seconds.
+                        </p>
                     </div>
 
                     {/* Native <details>: keyboard accessible and works without
                         JavaScript, so no accordion component is needed. */}
-                    <div className="divide-y rounded-xl border bg-card">
+                    <div className="space-y-3">
                         {FAQS.map(({ q, a }) => (
-                            <details key={q} className="group px-5">
+                            <details
+                                key={q}
+                                className="group rounded-xl border bg-card px-5 transition-colors open:border-accent-ink/40 hover:border-accent-ink/40"
+                            >
                                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold [&::-webkit-details-marker]:hidden">
                                     {q}
-                                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-background text-muted-foreground transition-colors group-open:border-accent-ink/40 group-open:bg-accent-ink group-open:text-background">
+                                        <Plus className="h-4 w-4 transition-transform duration-200 group-open:rotate-45" />
+                                    </span>
                                 </summary>
-                                <p className="pb-4 text-sm leading-relaxed text-muted-foreground">
+                                <p className="border-t pt-4 pb-5 text-sm leading-relaxed text-muted-foreground">
                                     {a}
                                 </p>
                             </details>
@@ -465,12 +490,9 @@ export function LandingPage() {
             {/* ---------------- Final call to action ---------------- */}
             <section className="border-t px-4 py-20">
                 <div className="mx-auto max-w-xl space-y-6 text-center">
-                    <Parrot
-                        state="idle"
-                        size={96}
-                        className="mx-auto"
-                        label="The Leword parrot"
-                    />
+                    {/* No mascot here any more: the footer banner directly
+                        below is a photograph full of parrots, and the flat
+                        mascot 150px above it read as the same beat twice. */}
                     <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
                         Start saving words today.
                     </h2>
@@ -494,58 +516,108 @@ export function LandingPage() {
                 </div>
             </section>
 
-            {/* ---------------- Footer ---------------- */}
-            <footer className="mt-auto border-t bg-muted/30 px-4 py-14">
-                <div className="mx-auto max-w-5xl">
-                    <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
-                        {/* Brand column, wider than the link columns. */}
-                        <div className="space-y-3 md:col-span-2">
-                            <Link
-                                href="/"
-                                className="flex w-fit items-center gap-2.5"
-                            >
-                                <LogoMark />
-                                <span className="text-xl font-bold tracking-tight">
-                                    Leword
-                                </span>
-                            </Link>
-                            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-                                A home for the words you hear and mean to
-                                remember. Save them, hear them, and come back to
-                                them until they stick.
-                            </p>
+            {/* ---------------- Footer ----------------
+                The banner photo and the link tier share one ink colour, set
+                once on the <footer> below: the scrim fades into exactly that
+                value, so the picture and the bar read as a single block
+                instead of a photo sitting on top of a strip. The ink is a
+                fixed dark in both themes -- a photograph does not invert, and
+                a footer built around one should not either. */}
+            <footer
+                className="mt-auto"
+                style={
+                    {
+                        "--footer-ink": "oklch(0.17 0.02 150)",
+                    } as React.CSSProperties
+                }
+            >
+                {/* ---- Banner band ----
+                    The photo puts its parrots in the left and right thirds and
+                    leaves a bright, near-empty valley up the middle. That
+                    middle is the worst place for white text and the best place
+                    for nothing, so the closing line runs along the bottom
+                    instead, where the scrim is fully opaque -- and every bird
+                    stays uncovered. */}
+                <div className="relative isolate flex h-[clamp(14rem,32vw,24rem)] items-end overflow-hidden">
+                    <Image
+                        src="/Images/footer.png"
+                        alt="Green Amazon parrots perched on mossy branches and in flight above a misty rainforest valley"
+                        fill
+                        sizes="100vw"
+                        className="object-cover"
+                        style={{ objectPosition: "center 38%" }}
+                    />
+
+                    {/* Scrim: solid at the foot, gone by just past halfway. */}
+                    <div
+                        aria-hidden
+                        className="absolute inset-0 bg-linear-to-t from-[var(--footer-ink)] from-20% via-[var(--footer-ink)]/55 via-52% to-transparent"
+                    />
+
+                    {/* The page opens on this line in the nav badge and closes
+                        on it here. */}
+                    <p className="relative z-10 w-full px-4 pb-8 text-center text-2xl font-extrabold tracking-tight text-white sm:pb-10 sm:text-3xl">
+                        Hear it. Say it.{" "}
+                        <span className="marker">Keep it.</span>
+                    </p>
+                </div>
+
+                {/* ---- Link tier ----
+                    No top border: the scrim has already landed on this exact
+                    colour, and a rule across the seam would put a line where
+                    the eye reads continuous ground. */}
+                <div className="bg-[var(--footer-ink)] px-4 pt-12 pb-8 text-white">
+                    <div className="mx-auto max-w-5xl">
+                        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
+                            {/* Brand column, wider than the link columns. */}
+                            <div className="space-y-3 md:col-span-2">
+                                <Link
+                                    href="/"
+                                    className="flex w-fit items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
+                                >
+                                    <LogoMark onDark />
+                                    <span className="text-xl font-bold tracking-tight">
+                                        Leword
+                                    </span>
+                                </Link>
+                                <p className="max-w-xs text-sm leading-relaxed text-white/65">
+                                    A home for the words you hear and mean to
+                                    remember. Save them, hear them, and come
+                                    back to them until they stick.
+                                </p>
+                            </div>
+
+                            {FOOTER_LINKS.map(({ heading, links }) => (
+                                <div key={heading} className="space-y-3">
+                                    <h3 className="text-xs font-semibold tracking-wider text-white/50 uppercase">
+                                        {heading}
+                                    </h3>
+                                    <ul className="space-y-2">
+                                        {links.map(({ label, href }) => (
+                                            <li key={label}>
+                                                <Link
+                                                    href={href}
+                                                    className="text-sm text-white/75 transition-colors hover:text-[var(--primary)]"
+                                                >
+                                                    {label}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
                         </div>
 
-                        {FOOTER_LINKS.map(({ heading, links }) => (
-                            <div key={heading} className="space-y-3">
-                                <h3 className="text-sm font-semibold">
-                                    {heading}
-                                </h3>
-                                <ul className="space-y-2">
-                                    {links.map(({ label, href }) => (
-                                        <li key={label}>
-                                            <Link
-                                                href={href}
-                                                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                                            >
-                                                {label}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row">
-                        <p className="text-xs text-muted-foreground">
-                            © {new Date().getFullYear()} Leword. For film
-                            lovers, avid readers, and anyone who collects good
-                            words.
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            Made for people who collect words.
-                        </p>
+                        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row">
+                            <p className="text-xs text-white/50">
+                                &copy; {new Date().getFullYear()} Leword. For
+                                film lovers, avid readers, and anyone who
+                                collects good words.
+                            </p>
+                            <p className="text-xs text-white/50">
+                                Made for people who collect words.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </footer>
