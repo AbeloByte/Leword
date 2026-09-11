@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { speakWord } from "@/lib/dictionary";
 import { Parrot } from "@/components/Parrot";
+import { LogoMark } from "@/components/LogoMark";
 import {
     Bird,
     Sparkles,
@@ -129,9 +130,7 @@ export function LandingPage() {
             <nav className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-md">
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
                     <Link href="/" className="flex items-center gap-2.5">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                            <Bird className="h-5 w-5" />
-                        </div>
+                        <LogoMark />
                         <span className="text-xl font-bold tracking-tight">
                             Leword
                         </span>
@@ -505,9 +504,7 @@ export function LandingPage() {
                                 href="/"
                                 className="flex w-fit items-center gap-2.5"
                             >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                                    <Bird className="h-5 w-5" />
-                                </div>
+                                <LogoMark />
                                 <span className="text-xl font-bold tracking-tight">
                                     Leword
                                 </span>

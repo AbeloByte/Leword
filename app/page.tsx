@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { AddWordDialog } from "@/components/AddWordDialog";
 import { WordCard, WordItem } from "@/components/WordCard";
@@ -14,11 +14,13 @@ import { Button } from "@/components/ui/button";
 import { HabitStats } from "@/components/HabitStats";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bird, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { LogoMark } from "@/components/LogoMark";
 import { Parrot } from "@/components/Parrot";
 import { toast } from "sonner";
 import { UserNav } from "@/components/UserNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function HomePage() {
     const { user, loading } = useAuth();
@@ -28,36 +30,54 @@ export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
+    // The word awaiting delete confirmation. One dialog serves the whole grid.
+    const [pendingDelete, setPendingDelete] = useState<WordItem | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Depend on the id, not the user object: the object identity changes on
+    // every token refresh, which would re-run the fetch effect.
+    const userId = user?.id;
+
+    // Which user the list has already been fetched for, so a refetch does not
+    // blank the grid back to skeletons.
+    const loadedForUser = useRef<string | null>(null);
+
     const loadWords = useCallback(async () => {
-        if (!user) return;
-        setFetchingWords(true);
+        if (!userId) return;
+
+        // Show the skeleton grid only the first time for this user. Later
+        // refetches (after a save or a failed delete) keep the current cards
+        // on screen and swap the data in underneath.
+        const firstLoad = loadedForUser.current !== userId;
+        if (firstLoad) setFetchingWords(true);
 
         try {
             const { data, error } = await supabase
                 .from("words")
                 .select("*")
-                .eq("user_id", user.id)
+                .eq("user_id", userId)
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
             setWords((data as WordItem[]) || []);
+            loadedForUser.current = userId;
         } catch (err) {
             console.error("Error loading words:", err);
             toast.error("Couldn't load your words");
         } finally {
-            setFetchingWords(false);
+            if (firstLoad) setFetchingWords(false);
         }
-    }, [user]);
+    }, [userId]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!userId) return;
 
         const timeoutId = window.setTimeout(() => {
             void loadWords();
         }, 0);
 
         return () => window.clearTimeout(timeoutId);
-    }, [user, loadWords]);
+    }, [userId, loadWords]);
 
     const handleToggleMastered = async (id: string, currentStatus: boolean) => {
         try {
@@ -86,18 +106,31 @@ export default function HomePage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
+    // The card's delete button only asks; the dialog does the deleting.
+    const requestDelete = (id: string) => {
+        setPendingDelete(words.find((w) => w.id === id) ?? null);
+    };
+
+    const confirmDelete = async () => {
+        if (!pendingDelete) return;
+        const { id, word } = pendingDelete;
+        setDeleting(true);
+
         try {
-            setWords((prev) => prev.filter((w) => w.id !== id));
             const { error } = await supabase
                 .from("words")
                 .delete()
                 .eq("id", id);
             if (error) throw error;
-            toast.success("Word deleted");
+
+            setWords((prev) => prev.filter((w) => w.id !== id));
+            toast.success(`"${word}" deleted`);
+            setPendingDelete(null);
         } catch {
             toast.error("Couldn't delete that word");
             loadWords();
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -154,9 +187,7 @@ export default function HomePage() {
             <header className="sticky top-0 z-20 border-b bg-background/75 backdrop-blur-xl">
                 <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 p-4">
                     <div className="flex min-w-0 items-center gap-2.5">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                            <Bird className="h-5 w-5" />
-                        </div>
+                        <LogoMark />
                         <div className="min-w-0">
                             <h1 className="text-lg leading-tight font-bold">
                                 Leword
@@ -310,12 +341,34 @@ export default function HomePage() {
                                 key={item.id}
                                 word={item}
                                 onToggleMastered={handleToggleMastered}
-                                onDelete={handleDelete}
+                                onDelete={requestDelete}
                             />
                         ))}
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                open={pendingDelete !== null}
+                onOpenChange={(next) => {
+                    if (!next) setPendingDelete(null);
+                }}
+                destructive
+                busy={deleting}
+                title="Delete this word?"
+                description={
+                    <>
+                        <strong className="font-semibold text-foreground capitalize">
+                            {pendingDelete?.word}
+                        </strong>{" "}
+                        will be removed from your words, along with its
+                        definition and memory trick. This can&rsquo;t be undone.
+                    </>
+                }
+                confirmLabel={deleting ? "Deleting…" : "Delete word"}
+                cancelLabel="Keep it"
+                onConfirm={confirmDelete}
+            />
         </main>
     );
 }

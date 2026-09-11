@@ -352,6 +352,47 @@
   50%      { transform: rotate(6deg); }
 }
 
+/* ------------------------------------------------------------------ *
+ * Flashcard: a real 3D flip
+ *
+ * Both faces are rendered at once and stacked in a single grid cell, so
+ * the card sizes itself to whichever face is taller instead of needing a
+ * fixed height (the usual absolute-positioning approach would). The
+ * parent rotates; each face hides its own back.
+ * ------------------------------------------------------------------ */
+
+.flip-scene {
+  perspective: 1500px;
+  perspective-origin: 50% 45%;
+}
+
+.flip-card {
+  display: grid;
+  transform-style: preserve-3d;
+  /* Slight overshoot past 180deg, which reads as momentum in a real card.
+     A transition rather than an animation so a flip can be interrupted
+     mid-turn and ease back from wherever it is. */
+  transition: transform 620ms cubic-bezier(0.2, 0.85, 0.25, 1.06);
+  will-change: transform;
+}
+
+.flip-card[data-flipped="true"] {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  grid-area: 1 / 1;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* The two faces are otherwise coplanar at z=0, which makes some GPUs
+     z-fight and flicker. A hair of depth separates them. */
+  transform: translateZ(1px);
+}
+
+.flip-face-back {
+  transform: rotateY(180deg) translateZ(1px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

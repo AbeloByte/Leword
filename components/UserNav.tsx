@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { User, LogOut, Settings, Loader2 } from "lucide-react";
 import {
     AVATAR_PRESETS,
@@ -33,6 +34,7 @@ import {
 export function UserNav() {
     const { user, signOut } = useAuth();
     const [profileOpen, setProfileOpen] = useState(false);
+    const [signOutOpen, setSignOutOpen] = useState(false);
 
     // Profile Form States
     const currentName =
@@ -139,13 +141,26 @@ export function UserNav() {
 
                     <DropdownMenuItem
                         className="cursor-pointer gap-2 text-xs text-destructive focus:text-destructive font-medium py-2 px-2.5 rounded-sm hover:bg-destructive/10"
-                        onClick={() => signOut()}
+                        onClick={() => setSignOutOpen(true)}
                     >
                         <LogOut className="h-4 w-4" />
                         Sign Out
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            <ConfirmDialog
+                open={signOutOpen}
+                onOpenChange={setSignOutOpen}
+                title="Sign out of Leword?"
+                description="Your words are saved to your account, so they will all be here when you sign back in."
+                confirmLabel="Sign out"
+                cancelLabel="Stay signed in"
+                onConfirm={() => {
+                    setSignOutOpen(false);
+                    void signOut();
+                }}
+            />
 
             {/* Profile Management Modal */}
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>

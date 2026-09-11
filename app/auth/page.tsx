@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Parrot } from "@/components/Parrot";
-import { ArrowLeft, Bird, Loader2 } from "lucide-react";
+import { LogoMark } from "@/components/LogoMark";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 // Crisp SVG Google Logo
 function GoogleIcon() {
@@ -141,9 +142,7 @@ export default function AuthPage() {
           href="/"
           className="relative z-10 flex w-fit items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Bird className="h-5 w-5" />
-          </div>
+          <LogoMark onDark />
           <span className="text-lg font-bold">Leword</span>
         </Link>
 
@@ -189,9 +188,7 @@ export default function AuthPage() {
             href="/"
             className="mb-8 flex w-fit items-center gap-2.5 lg:hidden"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Bird className="h-5 w-5" />
-            </div>
+            <LogoMark />
             <span className="text-lg font-bold">Leword</span>
           </Link>
 
