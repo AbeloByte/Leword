@@ -78,7 +78,7 @@ export function ConfirmDialog({
                         {cancelLabel}
                     </DialogClose>
                     <Button
-                        className="h-9 gap-1.5"
+                        className="h-10 gap-1.5"
                         variant={destructive ? "destructive" : "default"}
                         onClick={onConfirm}
                         disabled={busy}

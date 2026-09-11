@@ -214,9 +214,9 @@ export function LandingPage() {
                         <Link href="/auth" className="w-full sm:w-auto">
                             <Button
                                 size="lg"
-                                className="h-12 w-full gap-2 px-8 text-base font-semibold sm:w-auto"
+                                className="w-full gap-2 px-8 font-semibold sm:w-auto"
                             >
-                                Start collecting words — free
+                                Start collecting words
                                 <ArrowRight className="h-4 w-4" />
                             </Button>
                         </Link>
@@ -224,7 +224,7 @@ export function LandingPage() {
                             <Button
                                 size="lg"
                                 variant="outline"
-                                className="h-12 w-full gap-2 bg-card px-8 text-base font-semibold sm:w-auto"
+                                className="w-full gap-2 bg-card px-8 font-semibold sm:w-auto"
                             >
                                 See how it works
                             </Button>
@@ -298,8 +298,9 @@ export function LandingPage() {
                             </p>
 
                             <blockquote className="rounded-r-md border-l-2 border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground italic">
-                                &ldquo;It was pure serendipity that Sean and Will
-                                met at that exact moment in their lives.&rdquo;
+                                &ldquo;It was pure serendipity that Sean and
+                                Will met at that exact moment in their
+                                lives.&rdquo;
                             </blockquote>
 
                             <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-2.5 text-xs text-foreground/85">
@@ -414,16 +415,16 @@ export function LandingPage() {
                         <p className="leading-relaxed text-muted-foreground">
                             People write parrots off as copycats, which sells
                             them short. Alex, an African grey studied by
-                            researcher Irene Pepperberg for thirty years, learned
-                            to use more than a hundred English words to describe
-                            real things: colors, shapes and numbers. He was not
-                            just echoing them back.
+                            researcher Irene Pepperberg for thirty years,
+                            learned to use more than a hundred English words to
+                            describe real things: colors, shapes and numbers. He
+                            was not just echoing them back.
                         </p>
                         <p className="leading-relaxed text-muted-foreground">
-                            There&rsquo;s a big difference between repeating a word
-                            and really knowing it. That gap is what Leword is
-                            built to close. Hearing a word is easy. Keeping it
-                            takes a bit of practice.
+                            There&rsquo;s a big difference between repeating a
+                            word and really knowing it. That gap is what Leword
+                            is built to close. Hearing a word is easy. Keeping
+                            it takes a bit of practice.
                         </p>
                     </div>
 
@@ -497,14 +498,11 @@ export function LandingPage() {
                         Start saving words today.
                     </h2>
                     <p className="mx-auto max-w-md text-muted-foreground">
-                        Sign up with Google in about ten seconds, then save
-                        the first word you hear today.
+                        Sign up with Google in about ten seconds, then save the
+                        first word you hear today.
                     </p>
                     <Link href="/auth" className="inline-block">
-                        <Button
-                            size="lg"
-                            className="h-12 gap-2 px-8 text-base font-semibold"
-                        >
+                        <Button size="lg" className="gap-2 px-8 font-semibold">
                             Get started for free
                             <ArrowRight className="h-4 w-4" />
                         </Button>

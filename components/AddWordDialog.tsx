@@ -333,7 +333,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                                             active ? "default" : "secondary"
                                         }
                                         onClick={() => setCategory(c)}
-                                        className="h-7 cursor-pointer px-2.5 text-xs"
+                                        className="h-8 cursor-pointer px-3 text-xs"
                                     >
                                         {c}
                                     </Badge>

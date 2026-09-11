@@ -91,7 +91,7 @@ export function WordCard({ word, onToggleMastered, onDelete }: WordCardProps) {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className={`h-8 w-8 shrink-0 p-0 transition-colors ${
+                        className={`h-9 w-9 shrink-0 p-0 transition-colors ${
                             isTalking
                                 ? "bg-primary/15 text-accent-ink"
                                 : "text-muted-foreground hover:text-foreground"
@@ -152,7 +152,7 @@ export function WordCard({ word, onToggleMastered, onDelete }: WordCardProps) {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className={`h-7 gap-1 px-2 text-xs ${
+                            className={`h-8 gap-1.5 px-2.5 text-xs ${
                                 word.is_mastered
                                     ? "font-medium text-accent-ink hover:text-accent-ink"
                                     : "text-muted-foreground hover:text-foreground"
@@ -175,7 +175,7 @@ export function WordCard({ word, onToggleMastered, onDelete }: WordCardProps) {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+                            className="h-8 w-8 p-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                             onClick={() => onDelete(word.id)}
                             aria-label={`Delete ${word.word}`}
                             title="Delete word"

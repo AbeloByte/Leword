@@ -228,20 +228,20 @@ export default function HomePage() {
                 {/* Search & Category Filter Bar */}
                 <div className="space-y-3">
                     <div className="relative">
-                        <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="search"
                             placeholder="Search a word, its meaning, or where you found it"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             aria-label="Search your words"
-                            className="h-11 bg-card pr-10 pl-9"
+                            className="h-12 bg-card pr-11 pl-10"
                         />
                         {searchQuery && (
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="absolute top-1/2 right-1.5 h-7 w-7 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
+                                className="absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
                                 onClick={() => setSearchQuery("")}
                                 aria-label="Clear search"
                             >
@@ -267,7 +267,7 @@ export default function HomePage() {
                                             active ? "default" : "secondary"
                                         }
                                         onClick={() => setSelectedCategory(cat)}
-                                        className="h-7 shrink-0 cursor-pointer px-3 text-xs font-medium transition-all hover:opacity-80"
+                                        className="h-8 shrink-0 cursor-pointer px-3.5 text-xs font-medium transition-all hover:opacity-80"
                                     >
                                         {cat}
                                     </Badge>

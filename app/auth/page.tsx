@@ -17,7 +17,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 // Crisp SVG Google Logo
 function GoogleIcon() {
   return (
-    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+    <svg className="mr-2.5 h-[18px] w-[18px]" viewBox="0 0 24 24">
       <path
         fill="#4285F4"
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -35,6 +35,18 @@ function GoogleIcon() {
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
       />
     </svg>
+  );
+}
+
+/**
+ * The origin OAuth should return to. NEXT_PUBLIC_SITE_URL wins when present
+ * (set it to the production URL in the host's env), otherwise fall back to
+ * whatever host the browser is on, which is right for local dev.
+ */
+function siteOrigin(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
+    window.location.origin
   );
 }
 
@@ -68,7 +80,10 @@ export default function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          // Pinned to the deployed origin when set, so preview domains and
+          // any other host still land back on the real site. Supabase falls
+          // back to the project's Site URL when this is not allowlisted.
+          redirectTo: `${siteOrigin()}/`,
         },
       });
       if (error) throw error;
@@ -208,12 +223,13 @@ export default function AuthPage() {
             <Button
               type="button"
               variant="outline"
-              className="h-10 w-full bg-card font-medium"
+              size="lg"
+              className="w-full bg-card font-medium"
               onClick={handleGoogleSignIn}
               disabled={busy}
             >
               {googleLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2.5 h-[18px] w-[18px] animate-spin" />
               ) : (
                 <GoogleIcon />
               )}
@@ -245,7 +261,7 @@ export default function AuthPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={busy}
-                  className="h-10 bg-card"
+                  className="h-12 bg-card text-[15px]"
                 />
               </div>
 
@@ -262,18 +278,19 @@ export default function AuthPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={busy}
-                  className="h-10 bg-card"
+                  className="h-12 bg-card text-[15px]"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="mt-2 h-10 w-full font-semibold"
+                size="lg"
+                className="mt-2 w-full font-semibold"
                 disabled={busy}
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2.5 h-[18px] w-[18px] animate-spin" />
                     {isSignUp ? "Creating account…" : "Signing in…"}
                   </>
                 ) : isSignUp ? (

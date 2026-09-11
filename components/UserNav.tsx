@@ -90,11 +90,11 @@ export function UserNav() {
                     render={
                         <Button
                             variant="ghost"
-                            className="relative h-9 w-9 rounded-full p-0 ring-offset-background transition-colors hover:bg-muted"
+                            className="relative h-10 w-10 rounded-full p-0 ring-offset-background transition-colors hover:bg-muted"
                         />
                     }
                 >
-                    <Avatar className="h-9 w-9">
+                    <Avatar className="h-10 w-10">
                         {isAvatarIcon(currentAvatar) ? (
                             <AvatarFallback className="bg-muted text-muted-foreground">
                                 <AvatarGlyph
