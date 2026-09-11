@@ -2,10 +2,11 @@
 
 import React from "react";
 import { speakWord } from "@/lib/dictionary";
+import { useSpeakingWord } from "@/components/Parrot";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Volume2, Sparkles, Film, CheckCircle2, Trash2 } from "lucide-react";
+import { Volume2, Lightbulb, Film, CircleCheck, Trash2 } from "lucide-react";
 
 export interface WordItem {
     id: string;
@@ -27,23 +28,33 @@ interface WordCardProps {
 }
 
 export function WordCard({ word, onToggleMastered, onDelete }: WordCardProps) {
+    const added = new Date(word.created_at);
+    const isTalking = useSpeakingWord() === word.word;
+
     return (
         <Card
-            className={`transition-all duration-200 hover:shadow-md border ${
-                word.is_mastered
-                    ? "bg-muted/30 border-dashed opacity-75"
-                    : "bg-card"
+            className={`group relative [--card-spacing:--spacing(5)] transition-[box-shadow,transform,opacity] duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                word.is_mastered ? "opacity-70 hover:opacity-100" : ""
             }`}
         >
-            <CardContent className="p-5 space-y-3">
-                {/* Top row: Word title, part of speech, audio */}
+            {/* Mastery is signalled by an edge stripe rather than by fading the
+                whole card, so mastered words stay readable. */}
+            <span
+                aria-hidden
+                className={`absolute inset-y-0 left-0 w-1 transition-colors ${
+                    word.is_mastered ? "bg-primary" : "bg-transparent"
+                }`}
+            />
+
+            <CardContent className="space-y-3.5">
+                {/* Top row: word, part of speech, audio */}
                 <div className="flex items-start justify-between gap-2">
-                    <div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
                             <h3
-                                className={`text-xl font-bold tracking-tight capitalize ${
+                                className={`text-xl font-bold capitalize ${
                                     word.is_mastered
-                                        ? "line-through text-muted-foreground"
+                                        ? "text-muted-foreground line-through decoration-2"
                                         : "text-foreground"
                                 }`}
                             >
@@ -69,11 +80,10 @@ export function WordCard({ word, onToggleMastered, onDelete }: WordCardProps) {
                             )}
                         </div>
 
-                        {/* Source tag if present */}
                         {word.source && (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                                <Film className="h-3 w-3 text-primary" />
-                                <span>{word.source}</span>
+                            <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Film className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{word.source}</span>
                             </div>
                         )}
                     </div>
@@ -81,64 +91,93 @@ export function WordCard({ word, onToggleMastered, onDelete }: WordCardProps) {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground shrink-0"
+                        className={`h-8 w-8 shrink-0 p-0 transition-colors ${
+                            isTalking
+                                ? "bg-primary/15 text-accent-ink"
+                                : "text-muted-foreground hover:text-foreground"
+                        }`}
                         onClick={() => speakWord(word.word)}
+                        aria-label={`Hear ${word.word} pronounced`}
+                        aria-pressed={isTalking}
                         title="Listen to pronunciation"
                     >
-                        <Volume2 className="h-4 w-4" />
+                        <Volume2
+                            className={`h-4 w-4 ${isTalking ? "animate-pulse" : ""}`}
+                        />
                     </Button>
                 </div>
 
                 {/* Definition */}
-                <p className="text-sm text-foreground/90 leading-relaxed">
+                <p className="text-sm leading-relaxed text-foreground/90">
                     {word.definition}
                 </p>
 
                 {/* Context sentence where the user saw it */}
                 {word.context_sentence && (
-                    <div className="text-xs italic text-muted-foreground bg-muted/40 p-2.5 rounded-md border-l-2 border-primary/50">
-                        `{word.context_sentence}`
-                    </div>
+                    <blockquote className="rounded-r-md border-l-2 border-border bg-muted/40 px-3 py-2 text-xs italic text-muted-foreground">
+                        &ldquo;{word.context_sentence}&rdquo;
+                    </blockquote>
                 )}
 
-                {/* AI Mnemonic / Memory Hook */}
+                {/* Mnemonic / memory hook */}
                 {word.mnemonic && (
-                    <div className="flex items-start gap-2 text-xs bg-violet-500/10 text-violet-700 dark:text-violet-300 p-2.5 rounded-md border border-violet-500/20">
-                        <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-2.5 text-xs text-foreground/85">
+                        <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-ink" />
                         <span>
-                            <strong>Memory Trick:</strong> {word.mnemonic}
+                            <strong className="font-semibold text-foreground">
+                                Memory trick:
+                            </strong>{" "}
+                            {word.mnemonic}
                         </span>
                     </div>
                 )}
 
-                {/* Bottom actions: Mark Mastered & Delete */}
-                <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
-                    <span>
-                        {new Date(word.created_at).toLocaleDateString()}
-                    </span>
+                {/* Bottom actions */}
+                <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+                    <time
+                        dateTime={word.created_at}
+                        title={added.toLocaleString()}
+                    >
+                        {added.toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year:
+                                added.getFullYear() === new Date().getFullYear()
+                                    ? undefined
+                                    : "numeric",
+                        })}
+                    </time>
 
                     <div className="flex items-center gap-1">
                         <Button
                             variant="ghost"
                             size="sm"
-                            className={`h-7 px-2 gap-1 text-xs ${
+                            className={`h-7 gap-1 px-2 text-xs ${
                                 word.is_mastered
-                                    ? "text-emerald-600 font-medium"
+                                    ? "font-medium text-accent-ink hover:text-accent-ink"
                                     : "text-muted-foreground hover:text-foreground"
                             }`}
                             onClick={() =>
                                 onToggleMastered(word.id, word.is_mastered)
                             }
+                            aria-pressed={word.is_mastered}
                         >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            {word.is_mastered ? "Mastered" : "Mark Mastered"}
+                            <CircleCheck
+                                className={`h-3.5 w-3.5 ${
+                                    word.is_mastered ? "fill-accent-ink/15" : ""
+                                }`}
+                            />
+                            {word.is_mastered ? "Mastered" : "Mark mastered"}
                         </Button>
 
+                        {/* Hidden until hover on pointer devices so the card
+                            reads calmly; always visible on touch. */}
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive transition-colors"
+                            className="h-7 w-7 p-0 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                             onClick={() => onDelete(word.id)}
+                            aria-label={`Delete ${word.word}`}
                             title="Delete word"
                         >
                             <Trash2 className="h-3.5 w-3.5" />

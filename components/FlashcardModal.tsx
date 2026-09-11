@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { WordItem } from "./WordCard";
 import { speakWord } from "@/lib/dictionary";
 import {
@@ -11,6 +11,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Parrot, useSpeakingWord } from "@/components/Parrot";
 import { Badge } from "@/components/ui/badge";
 import {
     Layers,
@@ -18,8 +19,8 @@ import {
     ArrowRight,
     ArrowLeft,
     Volume2,
-    CheckCircle2,
-    Sparkles,
+    CircleCheck,
+    Lightbulb,
     Film,
 } from "lucide-react";
 
@@ -54,6 +55,13 @@ export function FlashcardModal({
 
     const currentWord = deck[currentIndex];
 
+    const speaking = useSpeakingWord();
+    const [cheering, setCheering] = useState(false);
+    const cheerTimer = useRef<number | undefined>(undefined);
+
+    // Drop the pending cheer if the dialog closes mid-celebration.
+    useEffect(() => () => window.clearTimeout(cheerTimer.current), []);
+
     const handleNext = () => {
         setIsFlipped(false);
         setTimeout(() => {
@@ -71,24 +79,33 @@ export function FlashcardModal({
     const handleMaster = () => {
         if (!currentWord) return;
         onToggleMastered(currentWord.id, currentWord.is_mastered);
+        setCheering(true);
+        window.clearTimeout(cheerTimer.current);
+        cheerTimer.current = window.setTimeout(() => setCheering(false), 1400);
         handleNext();
     };
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger
-                render={<Button variant="outline" className="gap-2 font-medium" />}
+                render={
+                    <Button
+                        variant="outline"
+                        className="gap-2 px-2.5 font-medium sm:px-4"
+                        aria-label="Review flashcards"
+                    />
+                }
             >
-                <Layers className="h-4 w-4 text-violet-600" />
-                Review Flashcards
+                <Layers className="h-4 w-4 text-accent-ink" />
+                <span className="hidden sm:inline">Review Flashcards</span>
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-[460px] p-6">
                 <DialogHeader>
                     <div className="flex items-center justify-between">
                         <DialogTitle className="text-base font-semibold flex items-center gap-2">
-                            <Layers className="h-4 w-4 text-violet-600" />
-                            Flashcard Review
+                            <Layers className="h-4 w-4 text-accent-ink" />
+                            Review your words
                         </DialogTitle>
                         {deck.length > 0 && (
                             <span className="text-xs text-muted-foreground font-mono">
@@ -99,14 +116,18 @@ export function FlashcardModal({
                 </DialogHeader>
 
                 {deck.length === 0 ? (
-                    <div className="text-center py-12 text-sm text-muted-foreground">
-                        No words to review right now!
+                    <div className="flex flex-col items-center gap-3 py-10 text-center">
+                        <Parrot state="rest" size={88} perch />
+                        <p className="text-sm text-muted-foreground">
+                            You&rsquo;ve mastered every word. Nothing left to
+                            review.
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-5 pt-2">
                         {/* 3D Flip Card Container */}
                         <div
-                            className="w-full min-h-[260px] rounded-2xl border-2 border-border/80 bg-card p-6 shadow-md flex flex-col justify-between cursor-pointer transition-all duration-300 select-none hover:border-primary/50 relative"
+                            className="w-full min-h-[260px] rounded-2xl border-2 border-border/80 bg-card p-6 shadow-md flex flex-col justify-between cursor-pointer transition-all duration-300 select-none hover:border-foreground/20 relative"
                             onClick={() => setIsFlipped(!isFlipped)}
                         >
                             {/* Card Header */}
@@ -126,12 +147,37 @@ export function FlashcardModal({
                             {!isFlipped ? (
                                 // FRONT OF CARD: Question / Prompt
                                 <div className="text-center my-auto space-y-2">
+                                    {/* stopPropagation: the whole card is a
+                                        flip target, and hearing the word must
+                                        not also reveal the answer. */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            speakWord(currentWord.word);
+                                        }}
+                                        aria-label={`Hear ${currentWord.word} pronounced`}
+                                        title="Tap the parrot to hear it"
+                                        className="mx-auto block cursor-pointer rounded-lg transition-transform hover:scale-105 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                                    >
+                                        <Parrot
+                                            size={72}
+                                            state={
+                                                cheering
+                                                    ? "cheer"
+                                                    : speaking ===
+                                                        currentWord.word
+                                                      ? "talking"
+                                                      : "idle"
+                                            }
+                                        />
+                                    </button>
                                     <h3 className="text-3xl font-extrabold capitalize tracking-tight text-foreground">
                                         {currentWord.word}
                                     </h3>
                                     {currentWord.source && (
                                         <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full">
-                                            <Film className="h-3 w-3 text-primary" />
+                                            <Film className="h-3 w-3 text-accent-ink" />
                                             <span>
                                                 Clue: {currentWord.source}
                                             </span>
@@ -166,14 +212,14 @@ export function FlashcardModal({
                                     </p>
 
                                     {currentWord.context_sentence && (
-                                        <p className="text-xs italic text-muted-foreground bg-muted/30 p-2 rounded border-l-2 border-primary">
-                                            "{currentWord.context_sentence}"
-                                        </p>
+                                        <blockquote className="rounded-r border-l-2 border-border bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground italic">
+                                            &ldquo;{currentWord.context_sentence}&rdquo;
+                                        </blockquote>
                                     )}
 
                                     {currentWord.mnemonic && (
-                                        <div className="text-xs bg-violet-500/10 text-violet-700 dark:text-violet-300 p-2 rounded flex items-start gap-1.5 border border-violet-500/20">
-                                            <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                        <div className="flex items-start gap-1.5 rounded border bg-muted/40 p-2 text-xs text-foreground/85">
+                                            <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5 text-accent-ink" />
                                             <span>{currentWord.mnemonic}</span>
                                         </div>
                                     )}
@@ -204,9 +250,9 @@ export function FlashcardModal({
                                 variant="outline"
                                 size="sm"
                                 onClick={handleMaster}
-                                className="gap-1.5 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-medium"
+                                className="gap-1.5 text-xs font-medium text-accent-ink hover:text-accent-ink"
                             >
-                                <CheckCircle2 className="h-3.5 w-3.5" />{" "}
+                                <CircleCheck className="h-3.5 w-3.5" />{" "}
                                 Mastered
                             </Button>
 
