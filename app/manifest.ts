@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
             "Capture, understand, and master new words from movies and books.",
         start_url: "/",
         display: "standalone",
-        background_color: "#ffffff",
-        theme_color: "#000000",
+        background_color: "#f6f8f6",
+        theme_color: "#4cc05c",
         icons: [
             {
                 src: "/icon.png",

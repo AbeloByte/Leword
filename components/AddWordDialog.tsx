@@ -13,17 +13,37 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Parrot, useSpeakingWord } from "@/components/Parrot";
 import { toast } from "sonner";
-import { Plus, Search, Volume2, Loader2, Sparkles, Wand2 } from "lucide-react";
+import {
+    Plus,
+    Search,
+    Loader2,
+    Lightbulb,
+    Wand2,
+    Check,
+} from "lucide-react";
 
 interface AddWordDialogProps {
     onWordAdded?: () => void;
 }
 
+/** One tap instead of typing the same handful of categories every time. */
+const QUICK_CATEGORIES = [
+    "General",
+    "Cinema",
+    "Books",
+    "Music",
+    "Work",
+    "Slang",
+];
+
 export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
-    const { user } = useAuth();
+    const { user, session } = useAuth();
     const [open, setOpen] = useState(false);
 
     // Search & Auto-lookup state
@@ -39,6 +59,25 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
     const [mnemonic, setMnemonic] = useState("");
     const [saving, setSaving] = useState(false);
 
+    const speaking = useSpeakingWord();
+    const busy = searching || aiLoading || saving;
+    const canSave = Boolean(dictData?.word && dictData?.definition) && !saving;
+
+    const resetForm = () => {
+        setQuery("");
+        setDictData(null);
+        setMnemonic("");
+        setContextSentence("");
+        setSource("");
+        setCategory("General");
+    };
+
+    // Clearing on close means reopening never shows the last word's leftovers.
+    const handleOpenChange = (next: boolean) => {
+        setOpen(next);
+        if (!next) resetForm();
+    };
+
     // 1. Standard Dictionary Lookup
     const handleStandardLookup = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -50,7 +89,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
 
         if (!result) {
             toast.info(
-                "Not found in standard dictionary. Try the 'AI Explain' button!",
+                "Not in the dictionary. Try the Explain button instead.",
             );
             setDictData({
                 word: query.trim(),
@@ -61,13 +100,18 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
         }
 
         setDictData(result);
-        toast.success("Standard definition loaded!");
+        toast.success("Definition loaded");
     };
 
-    // 2. Gemini AI Smart Explanation
+    // 2. Smart explanation for the saved word
     const handleAiLookup = async () => {
         if (!query.trim()) {
-            toast.error("Please enter a word first");
+            toast.error("Type a word first");
+            return;
+        }
+
+        if (!session) {
+            toast.error("You must be signed in to explain a word");
             return;
         }
 
@@ -76,7 +120,10 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
         try {
             const res = await fetch("/api/ai/explain", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                },
                 body: JSON.stringify({
                     word: query.trim(),
                     context: contextSentence.trim(),
@@ -86,7 +133,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
 
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.error || "AI request failed");
+                throw new Error(errorData.error || "Lookup failed");
             }
 
             const data = await res.json();
@@ -101,10 +148,14 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                 setMnemonic(data.mnemonic);
             }
 
-            toast.success("AI generated explanation and memory trick!");
-        } catch (err: any) {
+            toast.success("Added a definition and a memory trick");
+        } catch (err) {
             console.error(err);
-            toast.error(err.message || "Failed to get AI explanation");
+            toast.error(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Could not explain that word",
+            );
         } finally {
             setAiLoading(false);
         }
@@ -113,12 +164,12 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
     // 3. Save to Supabase
     const handleSave = async () => {
         if (!user) {
-            toast.error("You must be logged in to save words");
+            toast.error("You must be signed in to save words");
             return;
         }
 
         if (!dictData?.word || !dictData?.definition) {
-            toast.error("Please provide both the word and its definition");
+            toast.error("Add the word and what it means first");
             return;
         }
 
@@ -139,158 +190,214 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
 
             if (error) throw error;
 
-            toast.success(`"${dictData.word}" saved to your lexicon!`);
-
-            // Reset
-            setQuery("");
-            setDictData(null);
-            setMnemonic("");
-            setContextSentence("");
-            setSource("");
-            setCategory("General");
+            toast.success(`"${dictData.word}" saved`);
+            resetForm();
             setOpen(false);
 
             if (onWordAdded) onWordAdded();
-        } catch (error: any) {
-            toast.error(error.message || "Failed to save word");
+        } catch (error) {
+            toast.error(
+                error instanceof Error && error.message
+                    ? error.message
+                    : "Could not save that word",
+            );
         } finally {
             setSaving(false);
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger render={<Button className="gap-2 shadow-sm font-medium" />}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogTrigger
+                render={
+                    <Button
+                        className="gap-2 px-2.5 font-medium sm:px-4"
+                        aria-label="Add word"
+                    />
+                }
+            >
                 <Plus className="h-4 w-4" />
-                Add Word
+                <span className="hidden sm:inline">Add Word</span>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-primary" />
-                        Capture New Word
-                    </DialogTitle>
-                    <DialogDescription>
-                        Type a word you saw or heard. Use AI to get contextual
-                        definitions and memory tricks.
+            {/* p-0 + an internal scroll region: the header and the save bar
+                stay pinned while a long form scrolls between them. */}
+            <DialogContent className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-135">
+                <DialogHeader className="border-b px-5 py-4 pr-12">
+                    <DialogTitle className="text-lg">Add a word</DialogTitle>
+                    <DialogDescription className="text-sm">
+                        Type a word you heard or read, and Leword will fill in
+                        the rest.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 pt-2">
-                    {/* Word Search Bar with AI action */}
-                    <div className="flex gap-2">
-                        <Input
-                            placeholder="e.g. catharsis, red-handed..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            disabled={searching || aiLoading || saving}
-                            autoFocus
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleStandardLookup}
-                            disabled={searching || aiLoading || !query.trim()}
-                            title="Quick dictionary lookup"
+                <div className="space-y-5 overflow-y-auto px-5 py-5">
+                    {/* ---- Step 1: the word ---- */}
+                    <section className="space-y-2.5">
+                        <Label
+                            htmlFor="word"
+                            className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                         >
-                            {searching ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Search className="h-4 w-4" />
-                            )}
-                        </Button>
-                        <Button
-                            type="button"
-                            className="gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 shadow-sm"
-                            onClick={handleAiLookup}
-                            disabled={searching || aiLoading || !query.trim()}
-                        >
-                            {aiLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <>
-                                    <Wand2 className="h-4 w-4" />
-                                    AI Explain
-                                </>
-                            )}
-                        </Button>
-                    </div>
+                            The word
+                        </Label>
 
-                    {/* Source & Context Sentence */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <Label htmlFor="source" className="text-xs">
-                                Source (Movie/Book)
-                            </Label>
+                        <form onSubmit={handleStandardLookup}>
+                            <Input
+                                id="word"
+                                placeholder="catharsis"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                disabled={busy}
+                                autoFocus
+                                autoComplete="off"
+                                className="h-12 px-4 text-lg font-semibold"
+                            />
+                        </form>
+
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                className="h-10 flex-1 gap-1.5 font-semibold"
+                                onClick={handleAiLookup}
+                                disabled={busy || !query.trim()}
+                            >
+                                {aiLoading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Wand2 className="h-4 w-4" />
+                                )}
+                                {aiLoading ? "Working…" : "Explain this word"}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-10 gap-1.5 bg-card"
+                                onClick={() => handleStandardLookup()}
+                                disabled={busy || !query.trim()}
+                                title="Look it up in the dictionary instead"
+                            >
+                                {searching ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Search className="h-4 w-4" />
+                                )}
+                                <span className="hidden sm:inline">
+                                    Dictionary
+                                </span>
+                            </Button>
+                        </div>
+                    </section>
+
+                    {/* ---- Step 2: where it came from ---- */}
+                    <section className="space-y-3">
+                        <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Where you found it
+                            <span className="ml-1.5 font-normal normal-case opacity-70">
+                                optional, but it makes the explanation better
+                            </span>
+                        </Label>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
                             <Input
                                 id="source"
-                                placeholder="e.g. Oppenheimer"
+                                placeholder="Film, book or show"
                                 value={source}
                                 onChange={(e) => setSource(e.target.value)}
-                                className="text-xs"
+                                className="h-10"
+                                aria-label="Film, book or show"
                             />
-                        </div>
-
-                        <div className="space-y-1">
-                            <Label htmlFor="category" className="text-xs">
-                                Category
-                            </Label>
                             <Input
                                 id="category"
-                                placeholder="e.g. Cinema, Tech"
+                                placeholder="Category"
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
-                                className="text-xs"
+                                className="h-10"
+                                aria-label="Category"
                             />
                         </div>
-                    </div>
 
-                    <div className="space-y-1">
-                        <Label htmlFor="context" className="text-xs">
-                            Context sentence where you heard it
-                        </Label>
-                        <Input
+                        {/* Tap instead of typing the usual few. */}
+                        <div className="flex flex-wrap gap-1.5">
+                            {QUICK_CATEGORIES.map((c) => {
+                                const active = category === c;
+                                return (
+                                    <Badge
+                                        key={c}
+                                        render={
+                                            <button
+                                                type="button"
+                                                aria-pressed={active}
+                                            />
+                                        }
+                                        variant={
+                                            active ? "default" : "secondary"
+                                        }
+                                        onClick={() => setCategory(c)}
+                                        className="h-7 cursor-pointer px-2.5 text-xs"
+                                    >
+                                        {c}
+                                    </Badge>
+                                );
+                            })}
+                        </div>
+
+                        <Textarea
                             id="context"
-                            placeholder="e.g. The character felt an overwhelming sense of catharsis."
+                            placeholder="The sentence you heard it in…"
                             value={contextSentence}
                             onChange={(e) => setContextSentence(e.target.value)}
-                            className="text-xs"
+                            rows={2}
+                            aria-label="The sentence you heard it in"
                         />
-                    </div>
+                    </section>
 
-                    {/* Auto-filled Preview Area */}
-                    {dictData && (
-                        <div className="rounded-lg border bg-muted/40 p-3.5 space-y-2.5 text-sm animate-in fade-in-50">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-base capitalize">
+                    {/* ---- Step 3: the result ---- */}
+                    {dictData ? (
+                        <section className="animate-in fade-in-50 slide-in-from-bottom-1 space-y-3 rounded-xl border bg-muted/40 p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                    <h3 className="text-xl font-bold capitalize">
                                         {dictData.word}
-                                    </span>
+                                    </h3>
                                     {dictData.partOfSpeech && (
-                                        <span className="text-xs italic bg-primary/10 text-primary px-2 py-0.5 rounded-full capitalize">
+                                        <Badge
+                                            variant="secondary"
+                                            className="text-[11px] capitalize"
+                                        >
                                             {dictData.partOfSpeech}
-                                        </span>
+                                        </Badge>
                                     )}
                                 </div>
 
-                                <Button
+                                {/* The parrot doubles as the pronounce button
+                                    here, same as everywhere else. */}
+                                <button
                                     type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 gap-1 text-xs"
                                     onClick={() => speakWord(dictData.word)}
+                                    aria-label={`Hear ${dictData.word} pronounced`}
+                                    title="Tap the parrot to hear it"
+                                    className="-m-1 shrink-0 cursor-pointer rounded-lg p-1 transition-transform hover:scale-105 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                                 >
-                                    <Volume2 className="h-3.5 w-3.5" />
-                                    Listen
-                                </Button>
+                                    <Parrot
+                                        size={40}
+                                        state={
+                                            speaking === dictData.word
+                                                ? "talking"
+                                                : "idle"
+                                        }
+                                    />
+                                </button>
                             </div>
 
-                            <div>
-                                <Label className="text-xs text-muted-foreground">
-                                    Definition
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="definition"
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    What it means
                                 </Label>
-                                <Input
+                                <Textarea
+                                    id="definition"
                                     value={dictData.definition}
                                     onChange={(e) =>
                                         setDictData({
@@ -298,38 +405,73 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                                             definition: e.target.value,
                                         })
                                     }
-                                    className="mt-1 bg-background text-xs"
+                                    placeholder="Write what it means, in your own words"
+                                    rows={2}
+                                    className="bg-background"
                                 />
                             </div>
 
-                            {mnemonic && (
-                                <div className="pt-1">
-                                    <Label className="text-xs text-violet-600 dark:text-violet-400 font-semibold flex items-center gap-1">
-                                        <Sparkles className="h-3 w-3" /> Memory
-                                        Trick (Mnemonic)
-                                    </Label>
-                                    <p className="text-xs italic text-muted-foreground mt-0.5 bg-background/60 p-2 rounded border border-violet-200/50">
-                                        {mnemonic}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="mnemonic"
+                                    className="flex items-center gap-1 text-xs text-muted-foreground"
+                                >
+                                    <Lightbulb className="h-3 w-3 text-accent-ink" />
+                                    Memory trick
+                                </Label>
+                                <Textarea
+                                    id="mnemonic"
+                                    value={mnemonic}
+                                    onChange={(e) => setMnemonic(e.target.value)}
+                                    placeholder="Something that helps it stick"
+                                    rows={2}
+                                    className="bg-background"
+                                />
+                            </div>
 
+                            <p className="text-xs text-muted-foreground">
+                                Everything here is editable — change anything
+                                before you save.
+                            </p>
+                        </section>
+                    ) : (
+                        /* Idle state: says what happens next instead of
+                           leaving a blank gap above a dead button. */
+                        <section className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-8 text-center">
+                            <Parrot state="rest" size={72} perch />
+                            <p className="text-sm font-medium">
+                                Nothing to save yet
+                            </p>
+                            <p className="max-w-[15rem] text-xs text-muted-foreground">
+                                Type a word above and press Explain. You can
+                                edit whatever comes back.
+                            </p>
+                        </section>
+                    )}
+                </div>
+
+                {/* Pinned action bar */}
+                <div className="flex items-center gap-3 border-t bg-card px-5 py-3.5">
+                    <p className="flex-1 text-xs text-muted-foreground">
+                        {canSave
+                            ? "Looks good — save it to your words."
+                            : "Add a word and what it means to save."}
+                    </p>
                     <Button
                         onClick={handleSave}
-                        disabled={
-                            saving || !dictData?.word || !dictData?.definition
-                        }
-                        className="w-full mt-2 font-medium"
+                        disabled={!canSave}
+                        className="h-10 gap-1.5 px-5 font-semibold"
                     >
                         {saving ? (
                             <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving to Lexicon...
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Saving…
                             </>
                         ) : (
-                            "Save Word"
+                            <>
+                                <Check className="h-4 w-4" />
+                                Save word
+                            </>
                         )}
                     </Button>
                 </div>

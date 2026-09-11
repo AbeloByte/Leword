@@ -22,11 +22,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { User, LogOut, Settings, Loader2 } from "lucide-react";
+import {
+    AVATAR_PRESETS,
+    AvatarGlyph,
+    avatarIconName,
+    isAvatarIcon,
+} from "@/components/profile-avatar";
 
 export function UserNav() {
     const { user, signOut } = useAuth();
     const [profileOpen, setProfileOpen] = useState(false);
+    const [signOutOpen, setSignOutOpen] = useState(false);
 
     // Profile Form States
     const currentName =
@@ -37,13 +45,10 @@ export function UserNav() {
     const [avatarUrl, setAvatarUrl] = useState(currentAvatar);
     const [updating, setUpdating] = useState(false);
 
-    // Preset fun avatars using DiceBear (SVG avatars that look great)
-    const presetAvatars = [
-        `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.id || "avatar1"}`,
-        `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.id || "avatar2"}`,
-        `https://api.dicebear.com/7.x/lorelei/svg?seed=${user?.id || "avatar3"}`,
-        `https://api.dicebear.com/7.x/notionists/svg?seed=${user?.id || "avatar4"}`,
-    ];
+
+    // Presets are Lucide glyphs, not remotely generated artwork -- same icon
+    // family as the rest of the app, and no third-party image host.
+    const presetAvatars = AVATAR_PRESETS;
 
     // User initials for avatar fallback
     const initials = displayName
@@ -85,18 +90,29 @@ export function UserNav() {
                     render={
                         <Button
                             variant="ghost"
-                            className="relative h-9 w-9 rounded-full p-0 ring-offset-background transition-all hover:ring-2 hover:ring-primary/20"
+                            className="relative h-9 w-9 rounded-full p-0 ring-offset-background transition-colors hover:bg-muted"
                         />
                     }
                 >
                     <Avatar className="h-9 w-9">
-                        <AvatarImage
-                            src={currentAvatar}
-                            alt={displayName || "User avatar"}
-                        />
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
-                            {initials}
-                        </AvatarFallback>
+                        {isAvatarIcon(currentAvatar) ? (
+                            <AvatarFallback className="bg-muted text-muted-foreground">
+                                <AvatarGlyph
+                                    value={currentAvatar}
+                                    className="h-4.5 w-4.5"
+                                />
+                            </AvatarFallback>
+                        ) : (
+                            <>
+                                <AvatarImage
+                                    src={currentAvatar}
+                                    alt={displayName || "User avatar"}
+                                />
+                                <AvatarFallback className="bg-muted text-xs font-semibold text-muted-foreground">
+                                    {initials}
+                                </AvatarFallback>
+                            </>
+                        )}
                     </Avatar>
                 </DropdownMenuTrigger>
 
@@ -125,7 +141,7 @@ export function UserNav() {
 
                     <DropdownMenuItem
                         className="cursor-pointer gap-2 text-xs text-destructive focus:text-destructive font-medium py-2 px-2.5 rounded-sm hover:bg-destructive/10"
-                        onClick={() => signOut()}
+                        onClick={() => setSignOutOpen(true)}
                     >
                         <LogOut className="h-4 w-4" />
                         Sign Out
@@ -133,12 +149,25 @@ export function UserNav() {
                 </DropdownMenuContent>
             </DropdownMenu>
 
+            <ConfirmDialog
+                open={signOutOpen}
+                onOpenChange={setSignOutOpen}
+                title="Sign out of Leword?"
+                description="Your words are saved to your account, so they will all be here when you sign back in."
+                confirmLabel="Sign out"
+                cancelLabel="Stay signed in"
+                onConfirm={() => {
+                    setSignOutOpen(false);
+                    void signOut();
+                }}
+            />
+
             {/* Profile Management Modal */}
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
                 <DialogContent className="sm:max-w-[420px]">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <User className="h-5 w-5 text-primary" />
+                            <User className="h-5 w-5 text-accent-ink" />
                             Manage Profile
                         </DialogTitle>
                         <DialogDescription>
@@ -152,11 +181,24 @@ export function UserNav() {
                     >
                         {/* Current Avatar Preview */}
                         <div className="flex flex-col items-center justify-center gap-2 pb-2">
-                            <Avatar className="h-20 w-20 border-2 border-border shadow-sm">
-                                <AvatarImage src={avatarUrl || currentAvatar} />
-                                <AvatarFallback className="text-lg bg-primary/10 text-primary font-bold">
-                                    {initials}
-                                </AvatarFallback>
+                            <Avatar className="h-20 w-20 border">
+                                {isAvatarIcon(avatarUrl || currentAvatar) ? (
+                                    <AvatarFallback className="bg-muted text-muted-foreground">
+                                        <AvatarGlyph
+                                            value={avatarUrl || currentAvatar}
+                                            className="h-8 w-8"
+                                        />
+                                    </AvatarFallback>
+                                ) : (
+                                    <>
+                                        <AvatarImage
+                                            src={avatarUrl || currentAvatar}
+                                        />
+                                        <AvatarFallback className="bg-muted text-lg font-bold text-muted-foreground">
+                                            {initials}
+                                        </AvatarFallback>
+                                    </>
+                                )}
                             </Avatar>
                             <span className="text-xs text-muted-foreground">
                                 Preview
@@ -166,27 +208,31 @@ export function UserNav() {
                         {/* Pick from preset stylish avatars */}
                         <div className="space-y-1.5">
                             <Label className="text-xs">
-                                Or choose an avatar
+                                Choose an avatar
                             </Label>
-                            <div className="flex items-center justify-center gap-3 py-1">
-                                {presetAvatars.map((preset, idx) => (
-                                    <button
-                                        key={idx}
-                                        type="button"
-                                        onClick={() => setAvatarUrl(preset)}
-                                        className={`h-10 w-10 rounded-full border-2 overflow-hidden transition-all hover:scale-110 ${
-                                            avatarUrl === preset
-                                                ? "border-primary ring-2 ring-primary/20"
-                                                : "border-transparent"
-                                        }`}
-                                    >
-                                        <img
-                                            src={preset}
-                                            alt={`Preset ${idx + 1}`}
-                                            className="h-full w-full object-cover"
-                                        />
-                                    </button>
-                                ))}
+                            <div className="flex flex-wrap items-center justify-center gap-2 py-1">
+                                {presetAvatars.map((preset) => {
+                                    const active = avatarUrl === preset;
+                                    return (
+                                        <button
+                                            key={preset}
+                                            type="button"
+                                            onClick={() => setAvatarUrl(preset)}
+                                            aria-pressed={active}
+                                            aria-label={`Use the ${avatarIconName(preset)} avatar`}
+                                            className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                                                active
+                                                    ? "border-primary bg-primary text-primary-foreground"
+                                                    : "bg-muted text-muted-foreground hover:text-foreground"
+                                            }`}
+                                        >
+                                            <AvatarGlyph
+                                                value={preset}
+                                                className="h-4.5 w-4.5"
+                                            />
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -205,7 +251,7 @@ export function UserNav() {
 
                         <div className="space-y-1.5">
                             <Label htmlFor="avatar" className="text-xs">
-                                Custom Avatar Image URL
+                                Or use a custom image URL
                             </Label>
                             <Input
                                 id="avatar"
