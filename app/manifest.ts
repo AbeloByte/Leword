@@ -14,13 +14,28 @@ export default function manifest(): MetadataRoute.Manifest {
         theme_color: "#4cc05c",
         icons: [
             {
-                src: "/icon.png",
+                src: "/favicon/android-chrome-192x192.png",
                 sizes: "192x192",
                 type: "image/png",
+                purpose: "any",
             },
             {
-                src: "/icon.png",
+                src: "/favicon/android-chrome-512x512.png",
                 sizes: "512x512",
+                type: "image/png",
+                purpose: "any",
+            },
+            // Android masks this one to its own shape; it needs the icon's
+            // content to sit inside the safe zone or the edges get cropped.
+            {
+                src: "/favicon/android-chrome-512x512.png",
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "maskable",
+            },
+            {
+                src: "/favicon/apple-touch-icon.png",
+                sizes: "180x180",
                 type: "image/png",
             },
         ],
