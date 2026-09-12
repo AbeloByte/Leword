@@ -12,6 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Parrot, useSpeakingWord } from "@/components/Parrot";
+import {
+    playChirp,
+    preloadChirp,
+    isChirpEnabled,
+    setChirpEnabled,
+} from "@/lib/chirp";
 import { Badge } from "@/components/ui/badge";
 import {
     Layers,
@@ -22,6 +28,8 @@ import {
     CircleCheck,
     Lightbulb,
     Film,
+    Volume1,
+    VolumeX,
 } from "lucide-react";
 
 /** Half of the .flip-card transition in globals.css, i.e. the edge-on moment. */
@@ -41,10 +49,25 @@ export function FlashcardModal({
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
 
+    // Lazy initialiser, not an effect: DialogContent is only mounted once the
+    // dialog opens, so this never renders during SSR and cannot mismatch.
+    const [soundOn, setSoundOn] = useState(isChirpEnabled);
+
+    /**
+     * A deliberate flip by the user -- chirps. Navigation also flips the card
+     * back (see `step`), but that is incidental and stays silent, otherwise
+     * every next/prev would squawk.
+     */
+    const toggleFlip = () => {
+        playChirp();
+        setIsFlipped((f) => !f);
+    };
+
     // Initialize randomized deck of unmastered words
     const handleOpenChange = (isOpen: boolean) => {
         setOpen(isOpen);
         if (isOpen) {
+            preloadChirp();
             const unmastered = words.filter((w) => !w.is_mastered);
             // Shuffle array randomly
             const shuffled = [
@@ -128,11 +151,42 @@ export function FlashcardModal({
                             <Layers className="h-4 w-4 text-accent-ink" />
                             Review your words
                         </DialogTitle>
-                        {deck.length > 0 && (
-                            <span className="text-xs text-muted-foreground font-mono">
-                                {currentIndex + 1} / {deck.length}
-                            </span>
-                        )}
+                        <div className="flex items-center gap-1">
+                            {deck.length > 0 && (
+                                <span className="font-mono text-xs text-muted-foreground">
+                                    {currentIndex + 1} / {deck.length}
+                                </span>
+                            )}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                    const next = !soundOn;
+                                    setChirpEnabled(next);
+                                    setSoundOn(next);
+                                    // Confirm the new setting audibly.
+                                    if (next) playChirp();
+                                }}
+                                aria-pressed={soundOn}
+                                aria-label={
+                                    soundOn
+                                        ? "Turn flip sound off"
+                                        : "Turn flip sound on"
+                                }
+                                title={
+                                    soundOn
+                                        ? "Flip sound on"
+                                        : "Flip sound off"
+                                }
+                            >
+                                {soundOn ? (
+                                    <Volume1 className="h-4 w-4" />
+                                ) : (
+                                    <VolumeX className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 </DialogHeader>
 
@@ -151,7 +205,7 @@ export function FlashcardModal({
                             <div
                                 className="flip-card cursor-pointer"
                                 data-flipped={isFlipped}
-                                onClick={() => setIsFlipped((f) => !f)}
+                                onClick={toggleFlip}
                             >
                                 {/* ---------- FRONT: the prompt ---------- */}
                                 <div
@@ -174,6 +228,7 @@ export function FlashcardModal({
                                             type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation();
+                                                playChirp();
                                                 setIsFlipped(true);
                                             }}
                                             className="flex cursor-pointer items-center gap-1 rounded text-[11px] text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
