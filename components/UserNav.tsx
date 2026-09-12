@@ -44,8 +44,6 @@ export function UserNav() {
     const [displayName, setDisplayName] = useState(currentName);
     const [avatarUrl, setAvatarUrl] = useState(currentAvatar);
     const [updating, setUpdating] = useState(false);
-
-
     // Presets are Lucide glyphs, not remotely generated artwork -- same icon
     // family as the rest of the app, and no third-party image host.
     const presetAvatars = AVATAR_PRESETS;
@@ -73,8 +71,12 @@ export function UserNav() {
             toast.success("Profile updated!");
             setProfileOpen(false);
             window.location.reload();
-        } catch (err: any) {
-            toast.error(err.message || "Failed to update profile");
+        } catch (err) {
+            toast.error(
+                err instanceof Error && err.message
+                    ? err.message
+                    : "Failed to update profile",
+            );
         } finally {
             setUpdating(false);
         }
@@ -208,7 +210,7 @@ export function UserNav() {
                         {/* Pick from preset stylish avatars */}
                         <div className="space-y-1.5">
                             <Label className="text-xs">
-                                Choose an avatar
+                                Choose an icon
                             </Label>
                             <div className="flex flex-wrap items-center justify-center gap-2 py-1">
                                 {presetAvatars.map((preset) => {
@@ -251,7 +253,7 @@ export function UserNav() {
 
                         <div className="space-y-1.5">
                             <Label htmlFor="avatar" className="text-xs">
-                                Or use a custom image URL
+                                Or paste an image URL
                             </Label>
                             <Input
                                 id="avatar"

@@ -222,8 +222,8 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
 
             {/* p-0 + an internal scroll region: the header and the save bar
                 stay pinned while a long form scrolls between them. */}
-            <DialogContent className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-135">
-                <DialogHeader className="border-b px-5 py-4 pr-12">
+            <DialogContent className="max-h-[calc(100dvh-2rem)] gap-0 overflow-hidden p-0 sm:max-w-135">
+                <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
                     <DialogTitle className="text-lg">Add a word</DialogTitle>
                     <DialogDescription className="text-sm">
                         Type a word you heard or read, and Leword will fill in
@@ -231,7 +231,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-5 overflow-y-auto px-5 py-5">
+                <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5">
                     {/* ---- Step 1: the word ---- */}
                     <section className="space-y-2.5">
                         <Label
@@ -451,7 +451,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                 </div>
 
                 {/* Pinned action bar */}
-                <div className="flex items-center gap-3 border-t bg-card px-5 py-3.5">
+                <div className="flex shrink-0 items-center gap-3 border-t bg-card px-5 py-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
                     <p className="flex-1 text-xs text-muted-foreground">
                         {canSave
                             ? "Looks good — save it to your words."

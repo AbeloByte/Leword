@@ -186,6 +186,58 @@
 @layer utilities {
   /* Highlighter sweep. box-decoration-break keeps the fill intact when the
      text wraps across lines. */
+  /* Apple-style material.
+     Three things make it read as glass rather than as a translucent box:
+       1. saturate() behind the blur -- Apple's materials push the colour of
+          whatever is behind them, which is what stops it looking grey;
+       2. a rim that is bright at the top and dark at the bottom, simulating
+          a light source above, rather than one flat border colour;
+       3. a soft inner highlight just under the top edge.
+     Only the filters and the rim live here. The fill stays a Tailwind class
+     so it can be tuned per usage without fighting specificity. */
+  .glass {
+    position: relative;
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+  }
+
+  /* The rim. A 1px gradient border, done by painting the gradient and masking
+     out everything but the edge -- a plain border-image cannot follow a
+     border-radius. */
+  .glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      to bottom,
+      var(--glass-rim-top),
+      var(--glass-rim-mid) 45%,
+      var(--glass-rim-bottom)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Inner glow below the top edge, so the surface has some thickness. */
+  .glass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 1px 1px var(--glass-sheen);
+    pointer-events: none;
+  }
+
   /* Applies the paper noise on top of any solid background -- used by the
      lime auth panel, which paints over the body texture. */
   .noise {

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Parrot } from "@/components/Parrot";
 import { LogoMark } from "@/components/LogoMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 // Crisp SVG Google Logo
@@ -196,7 +197,13 @@ export default function AuthPage() {
       </aside>
 
       {/* ---------- Form panel ---------- */}
-      <main className="flex flex-col justify-center px-4 py-10 sm:px-8">
+      <main className="relative flex flex-col justify-center px-4 py-10 sm:px-8">
+        {/* Sits over the form column so it never collides with the photo
+            panel, and stays reachable before anyone signs in. */}
+        <div className="absolute top-4 right-4 z-10">
+          <ThemeToggle />
+        </div>
+
         <div className="mx-auto w-full max-w-sm">
           {/* Mobile-only branding, since the panel is hidden there. */}
           <Link

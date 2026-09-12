@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { speakWord } from "@/lib/dictionary";
 import { Parrot } from "@/components/Parrot";
 import { LogoMark } from "@/components/LogoMark";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
     Bird,
     Sparkles,
@@ -160,7 +161,8 @@ export function LandingPage() {
                         </a>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <ThemeToggle />
                         <Link href="/auth">
                             <Button
                                 variant="ghost"
@@ -253,8 +255,10 @@ export function LandingPage() {
                     <p className="mb-3 text-center text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         A word, the way Leword saves it
                     </p>
-                    <Card className="relative bg-card/90 shadow-2xl backdrop-blur-sm">
-                        <CardContent className="space-y-4 p-6">
+                    <Card
+                        className="glass rounded-3xl border-0 bg-white/55 shadow-none ring-0 [--card-spacing:--spacing(8)] sm:[--card-spacing:--spacing(10)] dark:bg-white/6"
+                    >
+                        <CardContent className="relative z-[2] space-y-5">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -347,7 +351,7 @@ export function LandingPage() {
                                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                                                 {i + 1}
                                             </span>
-                                            <Icon className="h-5 w-5 text-accent-ink" />
+                                            {/* <Icon className="h-5 w-5 text-accent-ink" /> */}
                                         </div>
                                         <h3 className="text-lg font-bold">
                                             {title}
