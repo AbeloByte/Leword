@@ -184,10 +184,10 @@ export default function HomePage() {
     return (
         <main className="min-h-screen pb-20">
             {/* Header */}
-            <header className="sticky top-0 z-20 border-b bg-background/75 backdrop-blur-xl">
+            <header className="nav-green sticky top-0 z-20 border-b backdrop-blur-xl">
                 <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 p-4">
                     <div className="flex min-w-0 items-center gap-2.5">
-                        <LogoMark />
+                        <LogoMark onDark />
                         <div className="min-w-0">
                             <h1 className="text-lg leading-tight font-bold">
                                 Leword

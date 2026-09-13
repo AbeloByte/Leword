@@ -454,3 +454,30 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Green navigation bar.
+   The bar is a deep green rather than `--primary` itself: the brand green is
+   also the fill of the Add Word button and the parrot, and green-on-green
+   flattens both. Sitting the bar a few steps darker keeps those accents
+   reading as accents.
+
+   Everything below the background line re-points the theme tokens for the
+   bar's subtree, so the buttons, the avatar and the muted caption pick up
+   on-dark values without each component needing a variant of its own. */
+.nav-green {
+  --nav-green-bar: oklch(0.34 0.085 148);
+  background-color: color-mix(in oklab, var(--nav-green-bar) 88%, transparent);
+
+  --background: transparent;
+  --foreground: oklch(0.98 0.01 150);
+  --muted-foreground: oklch(0.84 0.03 150);
+  --border: oklch(1 0 0 / 22%);
+  --input: oklch(1 0 0 / 22%);
+  --ring: oklch(0.82 0.12 146);
+  --muted: oklch(1 0 0 / 14%);
+  --accent: oklch(1 0 0 / 12%);
+  --accent-foreground: oklch(0.98 0.01 150);
+  --secondary: oklch(1 0 0 / 12%);
+  --secondary-foreground: oklch(0.98 0.01 150);
+  --accent-ink: oklch(0.82 0.14 148);
+}
