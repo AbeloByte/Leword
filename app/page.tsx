@@ -187,7 +187,7 @@ export default function HomePage() {
             <header className="nav-green sticky top-0 z-20 border-b backdrop-blur-xl">
                 <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 p-4">
                     <div className="flex min-w-0 items-center gap-2.5">
-                        <LogoMark onDark />
+                        <LogoMark className="nav-logo" />
                         <div className="min-w-0">
                             <h1 className="text-lg leading-tight font-bold">
                                 Leword

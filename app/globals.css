@@ -456,28 +456,40 @@
 }
 
 /* Green navigation bar.
-   The bar is a deep green rather than `--primary` itself: the brand green is
-   also the fill of the Add Word button and the parrot, and green-on-green
-   flattens both. Sitting the bar a few steps darker keeps those accents
-   reading as accents.
+   The bar is the brand green, so the tokens below flip the header's subtree
+   to ink-on-green: text, the caption, the button rims and the ghost-hover
+   wash all re-point here rather than each component growing an on-green
+   variant of its own.
 
-   Everything below the background line re-points the theme tokens for the
-   bar's subtree, so the buttons, the avatar and the muted caption pick up
-   on-dark values without each component needing a variant of its own. */
+   `--primary` is deliberately inverted inside the bar. Left alone, the Add
+   Word button would be brand green sitting on brand green and disappear; as
+   a dark pill with green text it still reads as the one filled action. */
 .nav-green {
-  --nav-green-bar: oklch(0.34 0.085 148);
-  background-color: color-mix(in oklab, var(--nav-green-bar) 88%, transparent);
+  --nav-green-bar: oklch(0.72 0.175 146);
+  --nav-ink: oklch(0.21 0.045 150);
+  background-color: color-mix(in oklab, var(--nav-green-bar) 90%, transparent);
 
   --background: transparent;
-  --foreground: oklch(0.98 0.01 150);
-  --muted-foreground: oklch(0.84 0.03 150);
-  --border: oklch(1 0 0 / 22%);
-  --input: oklch(1 0 0 / 22%);
-  --ring: oklch(0.82 0.12 146);
-  --muted: oklch(1 0 0 / 14%);
-  --accent: oklch(1 0 0 / 12%);
-  --accent-foreground: oklch(0.98 0.01 150);
-  --secondary: oklch(1 0 0 / 12%);
-  --secondary-foreground: oklch(0.98 0.01 150);
-  --accent-ink: oklch(0.82 0.14 148);
+  --foreground: var(--nav-ink);
+  --muted-foreground: oklch(0.35 0.06 150);
+  --border: oklch(0.21 0.045 150 / 24%);
+  --input: oklch(0.21 0.045 150 / 24%);
+  --ring: oklch(0.27 0.055 150);
+  --muted: oklch(0.21 0.045 150 / 12%);
+  --accent: oklch(0.21 0.045 150 / 12%);
+  --accent-foreground: var(--nav-ink);
+  --secondary: oklch(0.21 0.045 150 / 12%);
+  --secondary-foreground: var(--nav-ink);
+  --accent-ink: oklch(0.3 0.07 148);
+  --primary: oklch(0.24 0.05 150);
+  --primary-foreground: oklch(0.93 0.08 146);
+}
+
+/* The mark is the one thing in the bar that keeps its real colours: the
+   parrot is drawn in `--primary`, which the rule above inverted, so both
+   brand values are pinned back and the tile turns white to carry them. */
+.nav-green .nav-logo {
+  --primary: oklch(0.72 0.175 146);
+  --accent-ink: oklch(0.46 0.13 148);
+  background-color: oklch(1 0 0 / 92%);
 }
