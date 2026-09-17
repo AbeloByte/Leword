@@ -23,7 +23,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { User, LogOut, Settings, Loader2 } from "lucide-react";
+import { User, LogOut, Settings, Loader2, Trophy } from "lucide-react";
+import { useProgress } from "@/context/ProgressContext";
+import { RankIcon } from "@/components/RankIcon";
 import {
     AVATAR_PRESETS,
     AvatarGlyph,
@@ -33,6 +35,7 @@ import {
 
 export function UserNav() {
     const { user, signOut } = useAuth();
+    const { standing, pending, setRanksOpen } = useProgress();
     const [profileOpen, setProfileOpen] = useState(false);
     const [signOutOpen, setSignOutOpen] = useState(false);
 
@@ -130,6 +133,23 @@ export function UserNav() {
                     </div>
 
                     <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                        className="cursor-pointer gap-2 text-xs font-medium py-2 px-2.5 rounded-sm hover:bg-muted"
+                        onClick={() => setRanksOpen(true)}
+                    >
+                        <Trophy className="h-4 w-4" />
+                        Ranks &amp; Themes
+                        {!pending && (
+                            <span className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground">
+                                <RankIcon
+                                    icon={standing.rank.icon}
+                                    className="h-3 w-3"
+                                />
+                                {standing.rank.name}
+                            </span>
+                        )}
+                    </DropdownMenuItem>
 
                     <DropdownMenuItem
                         className="cursor-pointer gap-2 text-xs font-medium py-2 px-2.5 rounded-sm hover:bg-muted"

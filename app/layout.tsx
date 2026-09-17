@@ -5,6 +5,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ProgressProvider } from "@/context/ProgressContext";
+import { ACCENT_STORAGE_KEY, DEFAULT_ACCENT } from "@/lib/xp";
 
 export const viewport: Viewport = {
     // Matches the light/dark page background so the mobile browser chrome
@@ -107,6 +109,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             className={`${geistSans.variable} ${geistMono.variable} ${lufga.variable} h-full antialiased`}
         >
             <body className="min-h-full flex flex-col">
+                {/* The unlocked accent theme is the user's, so it lives in
+                    Supabase -- but waiting for that round trip would paint the
+                    app green first and flip colours a moment later. The choice
+                    is mirrored into localStorage and replayed here, the same
+                    trick next-themes uses for light/dark. */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `try{var a=localStorage.getItem(${JSON.stringify(ACCENT_STORAGE_KEY)});document.documentElement.dataset.accent=a||${JSON.stringify(DEFAULT_ACCENT)}}catch(e){}`,
+                    }}
+                />
                 <ThemeProvider
                     attribute="class"
                     defaultTheme="system"
@@ -114,8 +126,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     disableTransitionOnChange
                 >
                     <AuthProvider>
-                        {children}
-                        <Toaster position="top-center" richColors />
+                        <ProgressProvider>
+                            {children}
+                            <Toaster position="top-center" richColors />
+                        </ProgressProvider>
                     </AuthProvider>
                 </ThemeProvider>
             </body>

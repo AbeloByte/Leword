@@ -33,6 +33,8 @@ Leword is where it goes instead.
 
 🔥 **Streaks & stats** — days in a row, words collected, mastery rate
 
+🏅 **Ranks & milestones** — earn XP for every word you catch, master and review; climb from Novice to Grandmaster and unlock a new colour for the whole app at each rung
+
 🔊 **Say it out loud** — hear any word pronounced, with a parrot who talks along
 
 🌓 **Yours, everywhere** — installs like an app on phone or desktop, light or dark

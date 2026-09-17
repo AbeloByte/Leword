@@ -4,18 +4,10 @@ import React, { useMemo } from "react";
 import { WordItem } from "./WordCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Flame, CircleCheck, BookOpen } from "lucide-react";
+import { localDayKey } from "@/lib/xp";
 
 interface HabitStatsProps {
     words: WordItem[];
-}
-
-/** Local calendar day as YYYY-MM-DD, so a streak turns over at the user's
- *  midnight rather than UTC's. */
-function localDayKey(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
 }
 
 export function HabitStats({ words }: HabitStatsProps) {
