@@ -9,8 +9,6 @@ import React, {
     useRef,
     useState,
 } from "react";
-import { supabase } from "@/lib/supabase";
-import type { PostgrestError } from "@supabase/supabase-js";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { RankIcon } from "@/components/RankIcon";
@@ -18,8 +16,9 @@ import {
     ACCENT_STORAGE_KEY,
     AccentId,
     DEFAULT_ACCENT,
-    ProgressStats,
+    PROGRESS_STORAGE_PREFIX,
     Rank,
+    RankKey,
     RankStanding,
     WordStats,
     XpBreakdown,
@@ -32,18 +31,36 @@ import {
     xpBreakdown,
 } from "@/lib/xp";
 
-/**
- * Reviews are counted optimistically and written back in one batch. Flipping
- * through a deck fires this several times a second; without the wait each flip
- * would be its own round trip.
- */
-const FLUSH_DELAY_MS = 1200;
-
 /** An empty bank, used while the words are still loading. */
 const NO_WORDS: WordStats = { total: 0, mastered: 0, activeDays: 0 };
 
+/**
+ * Everything the word bank cannot derive.
+ *
+ * This deliberately lives on the device rather than in Supabase. Most of a
+ * user's XP comes from the `words` table, which is already synced and cannot
+ * drift; the rest is a review tally, a theme choice and a "highest rank already
+ * celebrated" marker -- none of which is worth a table, an RLS policy and a
+ * migration step. Signing in on a second device starts its review count at
+ * zero, which costs a little XP and nothing else.
+ *
+ * If per-word review history ever matters (spaced repetition), that belongs on
+ * `words` as a column, not here.
+ */
+interface ProgressRecord {
+    reviews: number;
+    accent: AccentId;
+    rankSeen: RankKey | null;
+}
+
+const EMPTY: ProgressRecord = {
+    reviews: 0,
+    accent: DEFAULT_ACCENT,
+    rankSeen: null,
+};
+
 interface ProgressContextValue {
-    /** True once the progress row has been read (or found missing). */
+    /** True once this user's record has been read. */
     ready: boolean;
     /** True until the dashboard reports its word stats. Everything XP-shaped
      *  reads as zero before then, so callers can show a skeleton instead. */
@@ -68,38 +85,53 @@ interface ProgressContextValue {
 
 const ProgressContext = createContext<ProgressContextValue | null>(null);
 
-/**
- * Supabase hands back a PostgrestError whose fields are non-enumerable, so
- * `console.error("...", error)` prints a bare `{}` and tells you nothing.
- * Pull the useful parts out by name.
- */
-function describe(error: PostgrestError): string {
-    return [error.message, error.details, error.hint]
-        .filter(Boolean)
-        .join(" — ");
+// ---------------------------------------------------------------- storage
+//
+// Every read and write is wrapped: in a private window, or with site data
+// blocked, the accessors throw. Losing the tally is survivable; crashing the
+// dashboard over it is not.
+
+function readRecord(userId: string): ProgressRecord {
+    try {
+        const raw = window.localStorage.getItem(
+            PROGRESS_STORAGE_PREFIX + userId,
+        );
+        if (!raw) return EMPTY;
+
+        const parsed = JSON.parse(raw) as Partial<ProgressRecord>;
+        return {
+            reviews:
+                typeof parsed.reviews === "number" && parsed.reviews >= 0
+                    ? Math.floor(parsed.reviews)
+                    : 0,
+            accent: isAccentId(parsed.accent) ? parsed.accent : DEFAULT_ACCENT,
+            rankSeen: isRankKey(parsed.rankSeen) ? parsed.rankSeen : null,
+        };
+    } catch {
+        return EMPTY;
+    }
 }
 
-/** PostgREST cannot see the table, or Postgres says it does not exist. Both
- *  mean the same thing here: the migration has not been run. */
-function isMissingTable(error: PostgrestError): boolean {
-    return error.code === "PGRST205" || error.code === "42P01";
+function writeRecord(userId: string, record: ProgressRecord) {
+    try {
+        window.localStorage.setItem(
+            PROGRESS_STORAGE_PREFIX + userId,
+            JSON.stringify(record),
+        );
+    } catch {
+        // Nothing to do but carry on with the value held in memory.
+    }
 }
 
-const MISSING_TABLE_HELP =
-    "Leword: the `user_progress` table is missing, so ranks cannot remember " +
-    "flashcard reviews or your theme choice. XP from words you have saved " +
-    "still works. Run supabase/migrations/0001_user_progress.sql in the " +
-    "Supabase SQL editor to fix it.";
-
-/** Applies the accent to <html>, where the CSS variables are scoped. */
+/** Applies the accent to <html>, where the CSS variables are scoped, and
+ *  mirrors it to the key the root layout's pre-paint script reads. */
 function paintAccent(id: AccentId) {
     if (typeof document === "undefined") return;
     document.documentElement.dataset.accent = id;
     try {
         window.localStorage.setItem(ACCENT_STORAGE_KEY, id);
     } catch {
-        // Private mode, or storage disabled. The theme still applies for this
-        // session; only the pre-paint shortcut is lost.
+        // Only the pre-paint shortcut is lost; the theme still applies.
     }
 }
 
@@ -107,104 +139,41 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuth();
     const userId = user?.id;
 
-    // Whose progress row is currently in state. Signing out is not handled by
-    // resetting every field -- the reads below simply fall back to zero when
-    // this no longer matches, which keeps the effect free of setState calls.
+    const [record, setRecord] = useState<ProgressRecord>(EMPTY);
     const [loadedFor, setLoadedFor] = useState<string | null>(null);
-    const [stored, setStored] = useState<ProgressStats>({
-        reviews: 0,
-        bonusXp: 0,
-    });
-    const [accent, setAccent] = useState<AccentId>(DEFAULT_ACCENT);
-    const [rankSeen, setRankSeen] = useState<string | null>(null);
     const [wordStats, setWordStats] = useState<WordStats | null>(null);
     const [ranksOpen, setRanksOpen] = useState(false);
 
-    // Reviews are incremented far more often than they are saved. The ref is
-    // the value the next flush will write; state is what the UI renders.
-    const pendingReviews = useRef(0);
-    const flushTimer = useRef<number | undefined>(undefined);
-    // The rank already celebrated this session, so a level-up toast does not
-    // need a state update (and the re-render it would cause) to fire once.
-    const celebrated = useRef<string | null>(null);
-    // Set when the progress table turns out to be unreachable. Writes are
-    // skipped from then on, so a missing migration costs one warning rather
-    // than a failed request per flashcard.
-    const storageOff = useRef(false);
+    // The rank already celebrated this session, so a level-up toast can fire
+    // once without a state update and the re-render that would cause. Tagged
+    // with the user it belongs to, so switching accounts needs no reset --
+    // a marker from the previous user simply stops matching.
+    const celebrated = useRef<{ userId: string; rank: RankKey } | null>(null);
+
+    // Load during render rather than in an effect. The read is synchronous, so
+    // an effect would render one frame at zero XP first -- and `userId` is null
+    // until auth resolves on the client, so this branch never runs on the
+    // server and cannot cause a hydration mismatch.
+    if (userId && loadedFor !== userId) {
+        setLoadedFor(userId);
+        setRecord(readRecord(userId));
+    }
 
     const ready = Boolean(userId) && loadedFor === userId;
-
-    // ---------------------------------------------------------------- load
-
-    useEffect(() => {
-        celebrated.current = null;
-        storageOff.current = false;
-        if (!userId) return;
-
-        let cancelled = false;
-
-        void (async () => {
-            const { data, error } = await supabase
-                .from("user_progress")
-                .select("reviews, bonus_xp, accent, rank_seen")
-                .eq("user_id", userId)
-                .maybeSingle();
-
-            if (cancelled) return;
-
-            if (error) {
-                // Worth logging rather than toasting: the app still works,
-                // it just cannot remember reviews or theme choices.
-                if (isMissingTable(error)) {
-                    // Say it once, and stop writing -- otherwise every flip of
-                    // a flashcard fires another doomed request.
-                    storageOff.current = true;
-                    console.warn(MISSING_TABLE_HELP);
-                } else {
-                    console.error(
-                        "Couldn't load your progress:",
-                        describe(error),
-                    );
-                }
-                setLoadedFor(userId);
-                return;
-            }
-
-            if (data) {
-                setStored({
-                    reviews: data.reviews ?? 0,
-                    bonusXp: data.bonus_xp ?? 0,
-                });
-                setRankSeen(isRankKey(data.rank_seen) ? data.rank_seen : null);
-
-                const saved = isAccentId(data.accent)
-                    ? data.accent
-                    : DEFAULT_ACCENT;
-                setAccent(saved);
-                paintAccent(saved);
-            }
-
-            setLoadedFor(userId);
-        })();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [userId]);
 
     // ----------------------------------------------------------- standing
 
     // Signed out, or mid-switch between accounts: show a blank slate rather
     // than the previous user's totals.
-    const activeStored = useMemo<ProgressStats>(
-        () => (ready ? stored : { reviews: 0, bonusXp: 0 }),
-        [ready, stored],
-    );
+    const activeRecord = ready ? record : EMPTY;
     const activeWordStats = ready ? wordStats : null;
 
     const breakdown = useMemo(
-        () => xpBreakdown(activeWordStats ?? NO_WORDS, activeStored),
-        [activeWordStats, activeStored],
+        () =>
+            xpBreakdown(activeWordStats ?? NO_WORDS, {
+                reviews: activeRecord.reviews,
+            }),
+        [activeWordStats, activeRecord.reviews],
     );
 
     const standing = useMemo(() => standingFor(totalXp(breakdown)), [breakdown]);
@@ -220,7 +189,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     // half-loaded total would strip a legitimately earned theme on every load.
     const settled = ready && wordStats !== null;
     const effectiveAccent =
-        settled && !unlocked.includes(accent) ? DEFAULT_ACCENT : accent;
+        settled && !unlocked.includes(activeRecord.accent)
+            ? DEFAULT_ACCENT
+            : activeRecord.accent;
 
     useEffect(() => {
         // Signed out, the brand goes back to parrot green.
@@ -228,105 +199,71 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
             paintAccent(DEFAULT_ACCENT);
             return;
         }
-        // Before the row is read, whatever the pre-paint script in the root
-        // layout put on <html> is the best guess there is; repainting from
-        // this side would flash the default green and then correct itself.
-        if (!ready) return;
-
         paintAccent(effectiveAccent);
-    }, [userId, ready, effectiveAccent]);
+    }, [userId, effectiveAccent]);
 
     // ------------------------------------------------------------- writes
 
-    const persist = useCallback(
-        async (patch: Record<string, unknown>) => {
-            if (!userId || storageOff.current) return;
+    // One place syncs the record out to storage: the updaters below stay pure,
+    // and nothing can change the record without it being saved. Re-writing
+    // what was just read on load is idempotent and not worth guarding against.
+    useEffect(() => {
+        if (!ready || !userId) return;
+        writeRecord(userId, record);
+    }, [ready, userId, record]);
 
-            const { error } = await supabase
-                .from("user_progress")
-                .upsert(
-                    { user_id: userId, ...patch },
-                    { onConflict: "user_id" },
-                );
-
-            if (!error) return;
-
-            if (isMissingTable(error)) {
-                storageOff.current = true;
-                console.warn(MISSING_TABLE_HELP);
-            } else {
-                console.error("Couldn't save your progress:", describe(error));
-            }
-        },
-        [userId],
-    );
-
-    const flushReviews = useCallback(() => {
-        window.clearTimeout(flushTimer.current);
-        const count = pendingReviews.current;
-        if (count === 0) return;
-        pendingReviews.current = 0;
-        void persist({ reviews: count });
-    }, [persist]);
+    const update = useCallback((patch: Partial<ProgressRecord>) => {
+        setRecord((prev) => ({ ...prev, ...patch }));
+    }, []);
 
     const recordReview = useCallback(() => {
-        if (!userId) return;
-
-        setStored((prev) => {
-            const next = { ...prev, reviews: prev.reviews + 1 };
-            pendingReviews.current = next.reviews;
-            return next;
-        });
-
-        window.clearTimeout(flushTimer.current);
-        flushTimer.current = window.setTimeout(flushReviews, FLUSH_DELAY_MS);
-    }, [userId, flushReviews]);
-
-    // Closing the tab mid-deck should not lose the last few flips.
-    useEffect(() => {
-        const onHide = () => {
-            if (document.visibilityState === "hidden") flushReviews();
-        };
-        document.addEventListener("visibilitychange", onHide);
-        return () => {
-            document.removeEventListener("visibilitychange", onHide);
-            flushReviews();
-        };
-    }, [flushReviews]);
+        setRecord((prev) => ({ ...prev, reviews: prev.reviews + 1 }));
+    }, []);
 
     const chooseAccent = useCallback(
         (id: AccentId) => {
             if (!unlocked.includes(id)) return;
-            setAccent(id);
             paintAccent(id);
-            void persist({ accent: id });
+            update({ accent: id });
         },
-        [unlocked, persist],
+        [unlocked, update],
     );
 
     // --------------------------------------------------------- level-ups
 
     useEffect(() => {
-        // Wait for both halves of the total: the stored row and the word bank.
-        // Celebrating off a half-loaded XP figure would fire on every refresh.
-        if (!ready || activeWordStats === null) return;
+        // Wait for both halves of the total: the stored record and the word
+        // bank. Celebrating off a half-loaded XP figure would fire on every
+        // page load.
+        if (!ready || !userId || activeWordStats === null) return;
 
         const current = standing.rank;
         const now = rankLevel(current.key);
-        // What this session has already handled wins over what the row said,
-        // so a second level-up does not re-read a stale rank_seen.
-        const seen = rankLevel(celebrated.current ?? rankSeen);
+        // What this session has already handled wins over what was stored, so
+        // a second level-up does not re-read a stale marker.
+        const thisSession =
+            celebrated.current?.userId === userId
+                ? celebrated.current.rank
+                : null;
+        const seen = rankLevel(thisSession ?? activeRecord.rankSeen);
 
         if (seen === now) return;
 
-        celebrated.current = current.key;
-        void persist({ rank_seen: current.key });
+        celebrated.current = { userId, rank: current.key };
+        update({ rankSeen: current.key });
 
         // First sight of this user, or a drop after deleting words: record
         // where they stand, silently. An existing collection should not throw
         // six toasts on its first load.
         if (seen !== -1 && seen < now) celebrate(current);
-    }, [ready, activeWordStats, standing.rank, rankSeen, persist]);
+    }, [
+        ready,
+        userId,
+        activeWordStats,
+        standing.rank,
+        activeRecord.rankSeen,
+        update,
+    ]);
 
     const reportWordStats = useCallback((stats: WordStats | null) => {
         setWordStats(stats);
@@ -338,7 +275,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
             pending: !ready || activeWordStats === null,
             standing,
             breakdown,
-            reviews: activeStored.reviews,
+            reviews: activeRecord.reviews,
             accent: effectiveAccent,
             unlocked,
             chooseAccent,
@@ -352,7 +289,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
             activeWordStats,
             standing,
             breakdown,
-            activeStored.reviews,
+            activeRecord.reviews,
             effectiveAccent,
             unlocked,
             chooseAccent,

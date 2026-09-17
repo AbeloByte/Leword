@@ -133,7 +133,6 @@ export function RankProgress() {
                         amount={breakdown.days}
                         label={`days active · ${XP.perActiveDay} each`}
                     />
-                    <Earned amount={breakdown.bonus} label="bonus" />
                 </div>
             </CardContent>
         </Card>
