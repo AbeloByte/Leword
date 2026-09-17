@@ -21,6 +21,11 @@ import { toast } from "sonner";
 import { UserNav } from "@/components/UserNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { RankBadge } from "@/components/RankBadge";
+import { RankProgress } from "@/components/RankProgress";
+import { RanksDialog } from "@/components/RanksDialog";
+import { useReportWordStats } from "@/context/ProgressContext";
+import { deriveWordStats } from "@/lib/xp";
 
 export default function HomePage() {
     const { user, loading } = useAuth();
@@ -134,6 +139,15 @@ export default function HomePage() {
         }
     };
 
+    // What the XP system needs from the word bank. null while the first fetch
+    // is still running, so the rank badge shows a skeleton rather than a
+    // Novice that immediately jumps -- and so no level-up fires off a zero.
+    const wordStats = useMemo(
+        () => (fetchingWords ? null : deriveWordStats(words)),
+        [words, fetchingWords],
+    );
+    useReportWordStats(wordStats);
+
     const categories = useMemo(() => {
         const set = new Set<string>();
         words.forEach((w) => {
@@ -201,6 +215,7 @@ export default function HomePage() {
                                     collected
                                 </p>
                             )}
+                            <RankBadge />
                         </div>
                     </div>
 
@@ -219,6 +234,9 @@ export default function HomePage() {
 
             {/* Main Content */}
             <div className="relative mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
+                {/* Rank, XP and progress to the next milestone */}
+                <RankProgress />
+
                 {/* Habit Stats Tracker */}
                 <HabitStats words={words} />
 
@@ -347,6 +365,8 @@ export default function HomePage() {
                     </div>
                 )}
             </div>
+
+            <RanksDialog />
 
             <ConfirmDialog
                 open={pendingDelete !== null}

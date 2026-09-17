@@ -19,6 +19,7 @@ import {
     setChirpEnabled,
 } from "@/lib/chirp";
 import { Badge } from "@/components/ui/badge";
+import { useProgress } from "@/context/ProgressContext";
 import {
     Layers,
     RotateCw,
@@ -53,6 +54,20 @@ export function FlashcardModal({
     // dialog opens, so this never renders during SSR and cannot mismatch.
     const [soundOn, setSoundOn] = useState(isChirpEnabled);
 
+    const { recordReview } = useProgress();
+
+    // A card counts as reviewed the first time its answer is revealed, and
+    // only once per card per session -- flipping the same word back and forth
+    // is not five reviews' worth of XP.
+    const reviewed = useRef<Set<string>>(new Set());
+
+    const markReviewed = () => {
+        const id = deck[currentIndex]?.id;
+        if (!id || reviewed.current.has(id)) return;
+        reviewed.current.add(id);
+        recordReview();
+    };
+
     /**
      * A deliberate flip by the user -- chirps. Navigation also flips the card
      * back (see `step`), but that is incidental and stays silent, otherwise
@@ -60,7 +75,8 @@ export function FlashcardModal({
      */
     const toggleFlip = () => {
         playChirp();
-        setIsFlipped((f) => !f);
+        if (!isFlipped) markReviewed();
+        setIsFlipped(!isFlipped);
     };
 
     // Initialize randomized deck of unmastered words
@@ -76,6 +92,7 @@ export function FlashcardModal({
             setDeck(shuffled);
             setCurrentIndex(0);
             setIsFlipped(false);
+            reviewed.current = new Set();
         }
     };
 
@@ -229,6 +246,7 @@ export function FlashcardModal({
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 playChirp();
+                                                markReviewed();
                                                 setIsFlipped(true);
                                             }}
                                             className="flex cursor-pointer items-center gap-1 rounded text-[11px] text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"

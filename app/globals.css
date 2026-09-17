@@ -64,15 +64,23 @@
      accent tokens sit close together instead of at opposite ends.
      `--primary` is deliberately identical in light and dark: it is the brand,
      and a brand colour that shifts between themes stops being one. */
+  /* The brand hue, lightness and chroma live in three numbers so a rank
+     reward can repaint every brand-coloured token at once (see the
+     [data-accent] blocks below). Everything else here is near-neutral and
+     stays put -- an unlocked theme recolours the app, it does not restyle it. */
+  --brand-l: 0.72;
+  --brand-c: 0.175;
+  --brand-h: 146;
+
   --background: oklch(0.977 0.004 150);
   --foreground: oklch(0.19 0.01 150);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.19 0.01 150);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.19 0.01 150);
-  --primary: oklch(0.72 0.175 146);
-  --primary-foreground: oklch(0.2 0.03 150);
-  --accent-ink: oklch(0.46 0.13 148);
+  --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --primary-foreground: oklch(0.2 0.03 var(--brand-h));
+  --accent-ink: oklch(0.46 0.13 var(--brand-h));
   /* Fixed dark for mascot details; unlike --foreground it does not invert. */
   --ink-dark: oklch(0.24 0.03 150);
   --secondary: oklch(0.954 0.005 150);
@@ -84,14 +92,14 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.9 0.005 150);
   --input: oklch(0.9 0.005 150);
-  --ring: oklch(0.46 0.13 148);
+  --ring: oklch(0.46 0.13 var(--brand-h));
 
   /* Charts step the one hue by lightness rather than adding new ones. */
-  --chart-1: oklch(0.72 0.175 146);
-  --chart-2: oklch(0.628 0.158 148);
-  --chart-3: oklch(0.706 0.135 148);
-  --chart-4: oklch(0.786 0.1 148);
-  --chart-5: oklch(0.862 0.062 148);
+  --chart-1: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --chart-2: oklch(0.628 0.158 var(--brand-h));
+  --chart-3: oklch(0.706 0.135 var(--brand-h));
+  --chart-4: oklch(0.786 0.1 var(--brand-h));
+  --chart-5: oklch(0.862 0.062 var(--brand-h));
 
   /* Paper texture: a fine grid plus fractal noise, both baked into the body
      background so there is no overlay element to fight with stacking. */
@@ -100,12 +108,12 @@
   --radius: 0.75rem;
   --sidebar: oklch(0.985 0.004 150);
   --sidebar-foreground: oklch(0.19 0.01 150);
-  --sidebar-primary: oklch(0.72 0.175 146);
-  --sidebar-primary-foreground: oklch(0.2 0.03 150);
+  --sidebar-primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --sidebar-primary-foreground: oklch(0.2 0.03 var(--brand-h));
   --sidebar-accent: oklch(0.944 0.006 150);
   --sidebar-accent-foreground: oklch(0.25 0.01 150);
   --sidebar-border: oklch(0.9 0.005 150);
-  --sidebar-ring: oklch(0.46 0.13 148);
+  --sidebar-ring: oklch(0.46 0.13 var(--brand-h));
 }
 
 .dark {
@@ -115,10 +123,10 @@
   --card-foreground: oklch(0.967 0.005 150);
   --popover: oklch(0.213 0.009 150);
   --popover-foreground: oklch(0.967 0.005 150);
-  --primary: oklch(0.72 0.175 146);
-  --primary-foreground: oklch(0.2 0.03 150);
+  --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --primary-foreground: oklch(0.2 0.03 var(--brand-h));
   /* The ink lifts well clear of the dark ground; the fill does not move. */
-  --accent-ink: oklch(0.78 0.15 148);
+  --accent-ink: oklch(0.78 0.15 var(--brand-h));
   --ink-dark: oklch(0.24 0.03 150);
   --secondary: oklch(0.27 0.01 150);
   --secondary-foreground: oklch(0.967 0.005 150);
@@ -129,24 +137,69 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 11%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.78 0.15 148);
+  --ring: oklch(0.78 0.15 var(--brand-h));
 
-  --chart-1: oklch(0.78 0.15 148);
-  --chart-2: oklch(0.712 0.158 148);
-  --chart-3: oklch(0.632 0.152 148);
-  --chart-4: oklch(0.552 0.138 148);
-  --chart-5: oklch(0.472 0.118 148);
+  --chart-1: oklch(0.78 0.15 var(--brand-h));
+  --chart-2: oklch(0.712 0.158 var(--brand-h));
+  --chart-3: oklch(0.632 0.152 var(--brand-h));
+  --chart-4: oklch(0.552 0.138 var(--brand-h));
+  --chart-5: oklch(0.472 0.118 var(--brand-h));
 
   --noise-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 
   --sidebar: oklch(0.213 0.009 150);
   --sidebar-foreground: oklch(0.967 0.005 150);
-  --sidebar-primary: oklch(0.72 0.175 146);
-  --sidebar-primary-foreground: oklch(0.2 0.03 150);
+  --sidebar-primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --sidebar-primary-foreground: oklch(0.2 0.03 var(--brand-h));
   --sidebar-accent: oklch(0.295 0.012 150);
   --sidebar-accent-foreground: oklch(0.967 0.005 150);
   --sidebar-border: oklch(1 0 0 / 11%);
-  --sidebar-ring: oklch(0.78 0.15 148);
+  --sidebar-ring: oklch(0.78 0.15 var(--brand-h));
+}
+
+/* ------------------------------------------------------------------ *
+ * Accent themes -- the rank rewards
+ *
+ * Each one sets only the three brand numbers; every token above is written
+ * as a formula over them, so a single line here repaints the primary fill,
+ * the ink, the ring, the chart ramp, the sidebar and the whole nav bar in
+ * both light and dark. The neutrals are left alone on purpose: unlocking a
+ * theme should recolour Leword, not restyle it.
+ *
+ * Same specificity as :root (both are one attribute/pseudo-class on <html>),
+ * so these must stay *below* it -- source order is what makes them win.
+ * Keep the values in step with ACCENTS in lib/xp.ts, which paints the
+ * swatches in the theme picker.
+ * ------------------------------------------------------------------ */
+
+[data-accent="ember"] {
+  --brand-l: 0.76;
+  --brand-c: 0.16;
+  --brand-h: 62;
+}
+
+[data-accent="indigo"] {
+  --brand-l: 0.7;
+  --brand-c: 0.15;
+  --brand-h: 285;
+}
+
+[data-accent="rose"] {
+  --brand-l: 0.7;
+  --brand-c: 0.17;
+  --brand-h: 18;
+}
+
+[data-accent="gold"] {
+  --brand-l: 0.82;
+  --brand-c: 0.15;
+  --brand-h: 92;
+}
+
+[data-accent="voltage"] {
+  --brand-l: 0.75;
+  --brand-c: 0.13;
+  --brand-h: 200;
 }
 
 @layer base {
@@ -465,31 +518,31 @@
    Word button would be brand green sitting on brand green and disappear; as
    a dark pill with green text it still reads as the one filled action. */
 .nav-green {
-  --nav-green-bar: oklch(0.72 0.175 146);
-  --nav-ink: oklch(0.21 0.045 150);
+  --nav-green-bar: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --nav-ink: oklch(0.21 0.045 var(--brand-h));
   background-color: color-mix(in oklab, var(--nav-green-bar) 90%, transparent);
 
   --background: transparent;
   --foreground: var(--nav-ink);
-  --muted-foreground: oklch(0.35 0.06 150);
-  --border: oklch(0.21 0.045 150 / 24%);
-  --input: oklch(0.21 0.045 150 / 24%);
-  --ring: oklch(0.27 0.055 150);
-  --muted: oklch(0.21 0.045 150 / 12%);
-  --accent: oklch(0.21 0.045 150 / 12%);
+  --muted-foreground: oklch(0.35 0.06 var(--brand-h));
+  --border: oklch(0.21 0.045 var(--brand-h) / 24%);
+  --input: oklch(0.21 0.045 var(--brand-h) / 24%);
+  --ring: oklch(0.27 0.055 var(--brand-h));
+  --muted: oklch(0.21 0.045 var(--brand-h) / 12%);
+  --accent: oklch(0.21 0.045 var(--brand-h) / 12%);
   --accent-foreground: var(--nav-ink);
-  --secondary: oklch(0.21 0.045 150 / 12%);
+  --secondary: oklch(0.21 0.045 var(--brand-h) / 12%);
   --secondary-foreground: var(--nav-ink);
-  --accent-ink: oklch(0.3 0.07 148);
-  --primary: oklch(0.24 0.05 150);
-  --primary-foreground: oklch(0.93 0.08 146);
+  --accent-ink: oklch(0.3 0.07 var(--brand-h));
+  --primary: oklch(0.24 0.05 var(--brand-h));
+  --primary-foreground: oklch(0.93 0.08 var(--brand-h));
 }
 
 /* The mark is the one thing in the bar that keeps its real colours: the
    parrot is drawn in `--primary`, which the rule above inverted, so both
    brand values are pinned back and the tile turns white to carry them. */
 .nav-green .nav-logo {
-  --primary: oklch(0.72 0.175 146);
-  --accent-ink: oklch(0.46 0.13 148);
+  --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --accent-ink: oklch(0.46 0.13 var(--brand-h));
   background-color: oklch(1 0 0 / 92%);
 }
