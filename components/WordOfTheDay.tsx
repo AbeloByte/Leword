@@ -7,6 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { speakWord } from "@/lib/dictionary";
 import { Parrot, useSpeakingWord } from "@/components/Parrot";
 import { CalendarDays, Volume2, Film, Lightbulb } from "lucide-react";
+import {
+    pickWordOfTheDay,
+    useToday,
+    WORD_OF_THE_DAY_ID,
+} from "@/lib/word-of-the-day";
 
 interface WordOfTheDayProps {
     words: WordItem[];
@@ -14,19 +19,13 @@ interface WordOfTheDayProps {
 
 export function WordOfTheDay({ words }: WordOfTheDayProps) {
     const speaking = useSpeakingWord();
-    // Pick today's unmastered word deterministically based on date
-    const todayWord = useMemo(() => {
-        const unmastered = words.filter((w) => !w.is_mastered);
-        if (unmastered.length === 0) return null;
-
-        const now = new Date();
-        // Calculate day of the year (1 to 365)
-        const startOfYear = new Date(now.getFullYear(), 0, 0);
-        const diff = now.getTime() - startOfYear.getTime();
-        const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-        return unmastered[dayOfYear % unmastered.length];
-    }, [words]);
+    const today = useToday();
+    // Re-picks when the date turns over, not only when the words change.
+    const todayWord = useMemo(
+        () => pickWordOfTheDay(words),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [words, today],
+    );
 
     if (!todayWord) return null;
 
@@ -34,7 +33,11 @@ export function WordOfTheDay({ words }: WordOfTheDayProps) {
     const isTalking = speaking === todayWord.word;
 
     return (
-        <Card className="[--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]">
+        <Card
+            id={WORD_OF_THE_DAY_ID}
+            // Clears the sticky header when scrolled to from a notification.
+            className="scroll-mt-28 [--card-spacing:--spacing(5)] sm:[--card-spacing:--spacing(6)]"
+        >
             <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-accent-ink uppercase">

@@ -7,6 +7,7 @@ import { AddWordDialog } from "@/components/AddWordDialog";
 import { WordCard, WordItem } from "@/components/WordCard";
 import { WordCardSkeleton } from "@/components/WordCardSkeleton";
 import { WordOfTheDay } from "@/components/WordOfTheDay";
+import { DailyWordNotification } from "@/components/DailyWordNotification";
 import { FlashcardModal } from "@/components/FlashcardModal";
 import { LandingPage } from "@/components/LandingPage";
 import { Input } from "@/components/ui/input";
@@ -226,6 +227,12 @@ export default function HomePage() {
                             onToggleMastered={handleToggleMastered}
                         />
                         <AddWordDialog onWordAdded={loadWords} />
+                        <DailyWordNotification
+                            key={user.id}
+                            userId={user.id}
+                            words={words}
+                            loaded={!fetchingWords}
+                        />
                         <ThemeToggle />
                         <UserNav />
                     </div>
