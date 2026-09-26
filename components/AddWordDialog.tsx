@@ -29,7 +29,8 @@ import {
 } from "lucide-react";
 
 interface AddWordDialogProps {
-    onWordAdded?: () => void;
+    /** Called with the new row's id so the page can scroll to it. */
+    onWordAdded?: (id: string) => void;
 }
 
 /** One tap instead of typing the same handful of categories every time. */
@@ -176,7 +177,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
         setSaving(true);
 
         try {
-            const { error } = await supabase.from("words").insert({
+            const { data, error } = await supabase.from("words").insert({
                 user_id: user.id,
                 word: dictData.word,
                 part_of_speech: dictData.partOfSpeech || null,
@@ -186,7 +187,9 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                 source: source.trim() || null,
                 category: category.trim() || "General",
                 is_mastered: false,
-            });
+            })
+                .select("id")
+                .single();
 
             if (error) throw error;
 
@@ -194,7 +197,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
             resetForm();
             setOpen(false);
 
-            if (onWordAdded) onWordAdded();
+            if (onWordAdded) onWordAdded(data.id);
         } catch (error) {
             toast.error(
                 error instanceof Error && error.message

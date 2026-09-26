@@ -106,6 +106,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             // next-themes writes the class on <html> before paint; suppressing
             // the mismatch warning here is the documented requirement.
             suppressHydrationWarning
+            // Lets Next.js turn off the smooth scroll from globals.css during
+            // route changes, so navigating jumps instead of gliding.
+            data-scroll-behavior="smooth"
             className={`${geistSans.variable} ${geistMono.variable} ${lufga.variable} h-full antialiased`}
         >
             <body className="min-h-full flex flex-col">
