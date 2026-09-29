@@ -19,14 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Parrot, useSpeakingWord } from "@/components/Parrot";
 import { toast } from "sonner";
-import {
-    Plus,
-    Search,
-    Loader2,
-    Lightbulb,
-    Wand2,
-    Check,
-} from "lucide-react";
+import { Plus, Search, Loader2, Lightbulb, Wand2, Check } from "lucide-react";
 
 interface AddWordDialogProps {
     /** Called with the new row's id so the page can scroll to it. */
@@ -152,10 +145,19 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
             toast.success("Added a definition and a memory trick");
         } catch (err) {
             console.error(err);
+            // Usually the AI quota running out, so point at the dictionary,
+            // which doesn't depend on it.
             toast.error(
                 err instanceof Error && err.message
                     ? err.message
-                    : "Could not explain that word",
+                    : "Could not explain that word right now",
+                {
+                    description: "Try the Dictionary button instead.",
+                    action: {
+                        label: "Use Dictionary",
+                        onClick: () => handleStandardLookup(),
+                    },
+                },
             );
         } finally {
             setAiLoading(false);
@@ -177,17 +179,19 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
         setSaving(true);
 
         try {
-            const { data, error } = await supabase.from("words").insert({
-                user_id: user.id,
-                word: dictData.word,
-                part_of_speech: dictData.partOfSpeech || null,
-                definition: dictData.definition,
-                mnemonic: mnemonic.trim() || null,
-                context_sentence: contextSentence.trim() || null,
-                source: source.trim() || null,
-                category: category.trim() || "General",
-                is_mastered: false,
-            })
+            const { data, error } = await supabase
+                .from("words")
+                .insert({
+                    user_id: user.id,
+                    word: dictData.word,
+                    part_of_speech: dictData.partOfSpeech || null,
+                    definition: dictData.definition,
+                    mnemonic: mnemonic.trim() || null,
+                    context_sentence: contextSentence.trim() || null,
+                    source: source.trim() || null,
+                    category: category.trim() || "General",
+                    is_mastered: false,
+                })
                 .select("id")
                 .single();
 
@@ -425,7 +429,9 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                                 <Textarea
                                     id="mnemonic"
                                     value={mnemonic}
-                                    onChange={(e) => setMnemonic(e.target.value)}
+                                    onChange={(e) =>
+                                        setMnemonic(e.target.value)
+                                    }
                                     placeholder="Something that helps it stick"
                                     rows={2}
                                     className="bg-background"
