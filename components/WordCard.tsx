@@ -25,17 +25,25 @@ interface WordCardProps {
     word: WordItem;
     onToggleMastered: (id: string, currentStatus: boolean) => void;
     onDelete: (id: string) => void;
+    /** Briefly rings the card, e.g. right after it was saved. */
+    highlighted?: boolean;
 }
 
-export function WordCard({ word, onToggleMastered, onDelete }: WordCardProps) {
+export function WordCard({
+    word,
+    onToggleMastered,
+    onDelete,
+    highlighted = false,
+}: WordCardProps) {
     const added = new Date(word.created_at);
     const isTalking = useSpeakingWord() === word.word;
 
     return (
         <Card
-            className={`group relative [--card-spacing:--spacing(5)] transition-[box-shadow,transform,opacity] duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+            id={`word-${word.id}`}
+            className={`group relative scroll-mt-24 [--card-spacing:--spacing(5)] transition-[box-shadow,transform,opacity] duration-500 hover:-translate-y-0.5 hover:shadow-md ${
                 word.is_mastered ? "opacity-70 hover:opacity-100" : ""
-            }`}
+            } ${highlighted ? "shadow-lg ring-2 ring-primary" : ""}`}
         >
             {/* Mastery is signalled by an edge stripe rather than by fading the
                 whole card, so mastered words stay readable. */}

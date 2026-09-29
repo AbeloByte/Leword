@@ -40,6 +40,10 @@ export default function HomePage() {
     const [pendingDelete, setPendingDelete] = useState<WordItem | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    // The word just saved: scrolled into view once, then ringed briefly.
+    const [highlightId, setHighlightId] = useState<string | null>(null);
+    const pendingScrollId = useRef<string | null>(null);
+
     // Depend on the id, not the user object: the object identity changes on
     // every token refresh, which would re-run the fetch effect.
     const userId = user?.id;
@@ -84,6 +88,88 @@ export default function HomePage() {
 
         return () => window.clearTimeout(timeoutId);
     }, [userId, loadWords]);
+
+    // After a save: refetch, drop any filter that would hide the new word,
+    // then let the effect below scroll to it once its card is on screen.
+    const handleWordAdded = useCallback(
+        async (id: string) => {
+            setSearchQuery("");
+            setSelectedCategory("All");
+            await loadWords();
+            pendingScrollId.current = id;
+            setHighlightId(id);
+        },
+        [loadWords],
+    );
+
+    useEffect(() => {
+        if (!highlightId) return;
+
+        let frame = 0;
+        let settleTimer = 0;
+        let clearTimer = 0;
+        const startedAt = performance.now();
+        const html = document.documentElement;
+
+        // The dialog locks page scroll while open and, on close, snaps the
+        // page back to where it was (and returns focus to its trigger). Any
+        // scroll issued before that finishes gets undone, so wait until the
+        // dialog is fully gone and the card has rendered.
+        const dialogGone = () =>
+            !html.hasAttribute("data-base-ui-scroll-locked") &&
+            getComputedStyle(html).overflowY !== "hidden" &&
+            getComputedStyle(document.body).overflowY !== "hidden" &&
+            !document.querySelector('[role="dialog"]');
+
+        const scrollToCard = (el: HTMLElement, smooth: boolean) => {
+            const rect = el.getBoundingClientRect();
+            const top =
+                window.scrollY +
+                rect.top -
+                Math.max(96, (window.innerHeight - rect.height) / 2);
+            window.scrollTo({
+                top: Math.max(0, top),
+                behavior: smooth ? "smooth" : "auto",
+            });
+        };
+
+        const tryScroll = () => {
+            if (pendingScrollId.current !== highlightId) return;
+            const el = document.getElementById(`word-${highlightId}`);
+
+            const waited = performance.now() - startedAt;
+            if (!el || (!dialogGone() && waited < 4000)) {
+                // Stop polling eventually rather than running forever.
+                if (waited < 8000) frame = requestAnimationFrame(tryScroll);
+                return;
+            }
+
+            pendingScrollId.current = null;
+            const reduceMotion = window.matchMedia(
+                "(prefers-reduced-motion: reduce)",
+            ).matches;
+            scrollToCard(el, !reduceMotion);
+
+            // If something still knocked the page back mid-scroll, jump.
+            settleTimer = window.setTimeout(() => {
+                const r = el.getBoundingClientRect();
+                if (r.bottom < 80 || r.top > window.innerHeight) {
+                    scrollToCard(el, false);
+                }
+            }, 900);
+
+            // Keep the ring on long enough to be seen after arriving.
+            clearTimer = window.setTimeout(() => setHighlightId(null), 3500);
+        };
+
+        frame = requestAnimationFrame(tryScroll);
+
+        return () => {
+            cancelAnimationFrame(frame);
+            window.clearTimeout(settleTimer);
+            window.clearTimeout(clearTimer);
+        };
+    }, [highlightId]);
 
     const handleToggleMastered = async (id: string, currentStatus: boolean) => {
         try {
@@ -226,7 +312,7 @@ export default function HomePage() {
                             words={words}
                             onToggleMastered={handleToggleMastered}
                         />
-                        <AddWordDialog onWordAdded={loadWords} />
+                        <AddWordDialog onWordAdded={handleWordAdded} />
                         <DailyWordNotification
                             key={user.id}
                             userId={user.id}
@@ -355,7 +441,7 @@ export default function HomePage() {
                             </Button>
                         ) : (
                             <div className="flex justify-center">
-                                <AddWordDialog onWordAdded={loadWords} />
+                                <AddWordDialog onWordAdded={handleWordAdded} />
                             </div>
                         )}
                     </div>
@@ -367,6 +453,7 @@ export default function HomePage() {
                                 word={item}
                                 onToggleMastered={handleToggleMastered}
                                 onDelete={requestDelete}
+                                highlighted={item.id === highlightId}
                             />
                         ))}
                     </div>
