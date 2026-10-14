@@ -4,7 +4,6 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { speakWord } from "@/lib/dictionary";
 import { Parrot } from "@/components/Parrot";
@@ -15,7 +14,6 @@ import {
     Sparkles,
     ArrowRight,
     Volume2,
-    Film,
     Layers,
     Flame,
     CircleCheck,
@@ -106,6 +104,11 @@ const FAQS = [
     },
 ];
 
+/** The floating nav's surface: hairline border, frosted fill, soft shadow.
+ *  The landing page's boxes share it so the page reads as one set. */
+const SURFACE =
+    "border bg-background/75 shadow-lg shadow-black/5 backdrop-blur-md";
+
 const FOOTER_LINKS = [
     {
         heading: "Product",
@@ -125,13 +128,148 @@ const FOOTER_LINKS = [
     },
 ];
 
+const DECK_WORDS = [
+    {
+        word: "Serendipity",
+        partOfSpeech: "noun",
+        source: "Cinema · Good Will Hunting",
+        definition: "Finding something good without looking for it.",
+        trick: "Serene discovery: a calm, lucky find.",
+    },
+    {
+        word: "Gaslight",
+        partOfSpeech: "verb",
+        source: "Cinema · Gaslight (1944)",
+        definition:
+            "To make someone doubt their own memory or sense of what is real.",
+        trick: "In the film, a husband dims the gas lamps and swears nothing changed.",
+    },
+    {
+        word: "Ephemeral",
+        partOfSpeech: "adjective",
+        source: "Music · a song lyric",
+        definition: "Lasting for only a very short time.",
+        trick: "Like a mayfly: here today, gone tomorrow.",
+    },
+    {
+        word: "Rizz",
+        partOfSpeech: "noun",
+        source: "Slang · a podcast",
+        definition: "The ability to charm or attract someone.",
+        trick: "It's the middle of chaRISma.",
+    },
+];
+
+/** How long each card stays on top before the deck moves on. */
+const DECK_INTERVAL_MS = 6000;
+
+/**
+ * A stack of word cards that deals itself every few seconds. Hovering or
+ * focusing it pauses the deck so the card can be read, and with reduced
+ * motion it does not move on at all.
+ */
+function WordDeck() {
+    const [index, setIndex] = React.useState(0);
+    const [paused, setPaused] = React.useState(false);
+    const current = DECK_WORDS[index];
+
+    React.useEffect(() => {
+        if (paused) return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            return;
+        }
+        const timer = window.setTimeout(
+            () => setIndex((i) => (i + 1) % DECK_WORDS.length),
+            DECK_INTERVAL_MS,
+        );
+        return () => window.clearTimeout(timer);
+    }, [index, paused]);
+
+    return (
+        <div
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+        >
+            {/* The stack: two cards fanned out behind the live one. */}
+            <div className="relative">
+                <div
+                    aria-hidden
+                    className="absolute inset-0 -translate-x-4 translate-y-4 -rotate-3 rounded-3xl border border-primary/40 bg-card/80 shadow-sm"
+                />
+                <div
+                    aria-hidden
+                    className="absolute inset-0 -translate-x-2 translate-y-2 rotate-[-1.5deg] rounded-3xl border border-primary/70 bg-card/90 shadow-sm"
+                />
+
+                <div className="relative flex min-h-60 flex-col rounded-3xl border border-primary bg-card p-6 text-left shadow-[0_20px_40px_-20px_oklch(0.3_0.06_150/0.4)] sm:p-7">
+                    <div
+                        key={current.word}
+                        className="flex flex-1 flex-col animate-in fade-in-0 slide-in-from-right-3 duration-500"
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <span className="text-xs font-medium text-muted-foreground">
+                                {current.source}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => speakWord(current.word)}
+                                aria-label={`Hear ${current.word} pronounced`}
+                                title="Hear it"
+                                className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-accent-ink transition-colors hover:bg-primary/15 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                            >
+                                <Volume2 className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <h3 className="mt-5 text-3xl font-extrabold tracking-tight">
+                            {current.word}{" "}
+                            <span className="text-sm font-medium text-muted-foreground italic">
+                                {current.partOfSpeech}
+                            </span>
+                        </h3>
+                        <p className="mt-2 text-base leading-relaxed text-foreground/90">
+                            {current.definition}
+                        </p>
+
+                        <p className="mt-auto flex items-start gap-2 pt-6 text-xs text-muted-foreground">
+                            <Sparkles className="mt-px h-3.5 w-3.5 shrink-0 text-accent-ink" />
+                            <span>
+                                <span className="font-semibold text-foreground">
+                                    Memory trick:
+                                </span>{" "}
+                                {current.trick}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function LandingPage() {
     return (
         <div className="flex min-h-screen flex-col text-foreground selection:bg-primary selection:text-primary-foreground">
             {/* ---------------- Navigation ---------------- */}
-            <nav className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-md">
-                <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-                    <Link href="/" className="flex items-center gap-2.5">
+            {/* A floating pill rather than a full-width strip. The outer nav
+                is only spacing, so it lets clicks through to the page; the
+                hero tucks up underneath it so the photo shows around the
+                pill instead of stopping at a band of plain background. */}
+            <nav className="pointer-events-none sticky top-0 z-30 px-3 pt-3 sm:px-4 sm:pt-4">
+                {/* From md up, equal outer columns keep the section links on
+                    the true centre line, whatever the widths of the logo and
+                    buttons. Below that there are no links to centre, and equal
+                    halves would push the buttons over the logo, so it is a
+                    plain row that gives each side the room it needs. */}
+                <div
+                    className={`pointer-events-auto mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 rounded-full pr-2 pl-3 sm:pl-5 md:grid md:grid-cols-[1fr_auto_1fr] ${SURFACE}`}
+                >
+                    <Link
+                        href="/"
+                        className="flex shrink-0 items-center gap-2.5 justify-self-start"
+                    >
                         <LogoMark />
                         <span className="text-xl font-bold tracking-tight">
                             Leword
@@ -161,13 +299,15 @@ export function LandingPage() {
                         </a>
                     </div>
 
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1 justify-self-end sm:gap-2">
                         <ThemeToggle />
-                        <Link href="/auth">
+                        {/* Both buttons open the same page, so on a phone the
+                            one that fits is enough. */}
+                        <Link href="/auth" className="hidden sm:block">
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-sm font-medium"
+                                className="rounded-full text-sm font-medium"
                             >
                                 Sign in
                             </Button>
@@ -175,7 +315,7 @@ export function LandingPage() {
                         <Link href="/auth">
                             <Button
                                 size="sm"
-                                className="gap-1 text-sm font-medium"
+                                className="gap-1 rounded-full text-sm font-medium"
                             >
                                 Get started
                                 <ArrowRight className="h-3.5 w-3.5" />
@@ -186,7 +326,34 @@ export function LandingPage() {
             </nav>
 
             {/* ---------------- Hero ---------------- */}
-            <section className="relative overflow-hidden px-4 pt-16 pb-16 md:pt-24 md:pb-24">
+            <section className="relative isolate -mt-18 overflow-hidden px-4 pt-34 pb-16 md:pt-42 md:pb-24">
+                {/* ---- Backdrop ----
+                    The same misty forest as the footer banner, earlier in the
+                    morning: the page opens and closes in one place. The photo
+                    keeps its middle empty for the copy and its parrot on the
+                    right edge. It only spans the copy; the scrim melts it into
+                    the page before the preview card.
+                    Foliage frames both sides, so the photo is used as is in
+                    light mode. In dark mode it is darkened rather than faded:
+                    fading pale mist over a dark page only leaves grey haze,
+                    while dimming it turns the mist into shadow and keeps the
+                    leaves green, like the footer at dusk. */}
+                <div
+                    aria-hidden
+                    className="absolute inset-x-0 top-0 -z-10 h-184 md:h-216"
+                >
+                    <Image
+                        src="/Images/hero-forest.png"
+                        alt=""
+                        fill
+                        sizes="100vw"
+                        loading="eager"
+                        fetchPriority="high"
+                        className="object-cover object-center dark:brightness-[0.32] dark:saturate-[1.5] dark:contrast-[1.2]"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent via-75% to-background" />
+                </div>
+
                 <div className="mx-auto max-w-4xl space-y-6 text-center">
                     <Parrot
                         state="idle"
@@ -216,7 +383,7 @@ export function LandingPage() {
                         <Link href="/auth" className="w-full sm:w-auto">
                             <Button
                                 size="lg"
-                                className="w-full gap-2 px-8 font-semibold sm:w-auto"
+                                className="w-full gap-2 rounded-full px-8 font-semibold sm:w-auto"
                             >
                                 Start collecting words
                                 <ArrowRight className="h-4 w-4" />
@@ -226,7 +393,7 @@ export function LandingPage() {
                             <Button
                                 size="lg"
                                 variant="outline"
-                                className="w-full gap-2 bg-card px-8 font-semibold sm:w-auto"
+                                className={`w-full gap-2 rounded-full px-8 font-semibold sm:w-auto ${SURFACE}`}
                             >
                                 See how it works
                             </Button>
@@ -250,75 +417,12 @@ export function LandingPage() {
                     </div>
                 </div>
 
-                {/* Live preview of a real word card */}
-                <div className="mx-auto mt-14 max-w-xl">
-                    <p className="mb-3 text-center text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                {/* Live preview: a small deck of word cards */}
+                <div className="mx-auto mt-14 max-w-md">
+                    <p className="mb-5 text-center text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         A word, the way Leword saves it
                     </p>
-                    <Card
-                        className="glass rounded-3xl border-0 bg-white/55 shadow-none ring-0 [--card-spacing:--spacing(8)] sm:[--card-spacing:--spacing(10)] dark:bg-white/6"
-                    >
-                        <CardContent className="relative z-[2] space-y-5">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <h3 className="text-2xl font-bold tracking-tight">
-                                            Serendipity
-                                        </h3>
-                                        <Badge
-                                            variant="secondary"
-                                            className="text-xs"
-                                        >
-                                            noun
-                                        </Badge>
-                                        <Badge
-                                            variant="outline"
-                                            className="text-xs"
-                                        >
-                                            Cinema
-                                        </Badge>
-                                    </div>
-                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                        <Film className="h-3 w-3 shrink-0" />
-                                        <span>Movie: Good Will Hunting</span>
-                                    </div>
-                                </div>
-
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="shrink-0 gap-1.5 text-xs"
-                                    onClick={() => speakWord("Serendipity")}
-                                    title="Test pronunciation"
-                                >
-                                    <Volume2 className="h-3.5 w-3.5 text-accent-ink" />
-                                    Listen
-                                </Button>
-                            </div>
-
-                            <p className="text-sm leading-relaxed text-foreground/90">
-                                The occurrence of events by chance in a happy or
-                                beneficial way; a pleasant surprise.
-                            </p>
-
-                            <blockquote className="rounded-r-md border-l-2 border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground italic">
-                                &ldquo;It was pure serendipity that Sean and
-                                Will met at that exact moment in their
-                                lives.&rdquo;
-                            </blockquote>
-
-                            <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-2.5 text-xs text-foreground/85">
-                                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-ink" />
-                                <span>
-                                    <strong className="font-semibold">
-                                        Memory trick:
-                                    </strong>{" "}
-                                    Think of <em>serene discovery</em> — a calm,
-                                    unexpected discovery that brings happiness.
-                                </span>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <WordDeck />
                 </div>
             </section>
 
@@ -345,7 +449,7 @@ export function LandingPage() {
                     <ol className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         {STEPS.map(({ icon: Icon, title, body }, i) => (
                             <li key={title}>
-                                <Card className="h-full">
+                                <Card className={`h-full rounded-3xl ring-0 ${SURFACE}`}>
                                     <CardContent className="space-y-3 p-6">
                                         <div className="flex items-center gap-3">
                                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
@@ -385,7 +489,10 @@ export function LandingPage() {
 
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                         {FEATURES.map(({ icon: Icon, title, body }) => (
-                            <Card key={title} className="h-full">
+                            <Card
+                                key={title}
+                                className={`h-full rounded-3xl ring-0 ${SURFACE}`}
+                            >
                                 <CardContent className="space-y-3 p-6">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
                                         <Icon className="h-5 w-5" />
@@ -475,7 +582,7 @@ export function LandingPage() {
                         {FAQS.map(({ q, a }) => (
                             <details
                                 key={q}
-                                className="group rounded-xl border bg-card px-5 transition-colors open:border-accent-ink/40 hover:border-accent-ink/40"
+                                className={`group rounded-3xl px-5 transition-colors open:border-accent-ink/40 hover:border-accent-ink/40 ${SURFACE}`}
                             >
                                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-sm font-semibold [&::-webkit-details-marker]:hidden">
                                     {q}
@@ -506,7 +613,7 @@ export function LandingPage() {
                         first word you hear today.
                     </p>
                     <Link href="/auth" className="inline-block">
-                        <Button size="lg" className="gap-2 px-8 font-semibold">
+                        <Button size="lg" className="gap-2 rounded-full px-8 font-semibold">
                             Get started for free
                             <ArrowRight className="h-4 w-4" />
                         </Button>
@@ -539,15 +646,26 @@ export function LandingPage() {
                     middle is the worst place for white text and the best place
                     for nothing, so the closing line runs along the bottom
                     instead, where the scrim is fully opaque -- and every bird
-                    stays uncovered. */}
-                <div className="relative isolate flex h-[clamp(14rem,32vw,24rem)] items-end overflow-hidden">
+                    stays uncovered.
+                    The photo is about 5:2, so the band grows with the width
+                    (up to 36rem) instead of capping early: a short, wide band
+                    cropped the birds at the top. What crop remains comes off
+                    the bottom, which the scrim covers anyway. */}
+                <div className="relative isolate flex h-[clamp(16rem,40vw,36rem)] items-end overflow-hidden">
                     <Image
                         src="/Images/footer.png"
                         alt="Green Amazon parrots perched on mossy branches and in flight above a misty rainforest valley"
                         fill
                         sizes="100vw"
                         className="object-cover"
-                        style={{ objectPosition: "center 38%" }}
+                        style={{ objectPosition: "center 15%" }}
+                    />
+
+                    {/* A short fade from the page into the photo, so the band
+                        starts softly instead of on a hard cut line. */}
+                    <div
+                        aria-hidden
+                        className="absolute inset-x-0 top-0 h-12 bg-linear-to-b from-background to-transparent sm:h-16"
                     />
 
                     {/* Scrim: solid at the foot, gone by just past halfway. */}
