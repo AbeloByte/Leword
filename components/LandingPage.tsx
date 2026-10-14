@@ -646,15 +646,26 @@ export function LandingPage() {
                     middle is the worst place for white text and the best place
                     for nothing, so the closing line runs along the bottom
                     instead, where the scrim is fully opaque -- and every bird
-                    stays uncovered. */}
-                <div className="relative isolate flex h-[clamp(14rem,32vw,24rem)] items-end overflow-hidden">
+                    stays uncovered.
+                    The photo is about 5:2, so the band grows with the width
+                    (up to 36rem) instead of capping early: a short, wide band
+                    cropped the birds at the top. What crop remains comes off
+                    the bottom, which the scrim covers anyway. */}
+                <div className="relative isolate flex h-[clamp(16rem,40vw,36rem)] items-end overflow-hidden">
                     <Image
                         src="/Images/footer.png"
                         alt="Green Amazon parrots perched on mossy branches and in flight above a misty rainforest valley"
                         fill
                         sizes="100vw"
                         className="object-cover"
-                        style={{ objectPosition: "center 38%" }}
+                        style={{ objectPosition: "center 15%" }}
+                    />
+
+                    {/* A short fade from the page into the photo, so the band
+                        starts softly instead of on a hard cut line. */}
+                    <div
+                        aria-hidden
+                        className="absolute inset-x-0 top-0 h-12 bg-linear-to-b from-background to-transparent sm:h-16"
                     />
 
                     {/* Scrim: solid at the foot, gone by just past halfway. */}
