@@ -422,7 +422,7 @@ export function LandingPage() {
                     <p className="mb-5 text-center text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         A word, the way Leword saves it
                     </p>
-                    <WordDeck />
+                    {/* <WordDeck /> */}
                 </div>
             </section>
 
