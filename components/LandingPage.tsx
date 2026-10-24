@@ -5,11 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { speakWord } from "@/lib/dictionary";
 import { Parrot } from "@/components/Parrot";
 import { LogoMark } from "@/components/LogoMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
+    BookPlus,
+    Repeat2,
     Bird,
     Sparkles,
     ArrowRight,
@@ -17,8 +18,6 @@ import {
     Layers,
     Flame,
     CircleCheck,
-    BookPlus,
-    Repeat2,
     Smartphone,
     Search,
     ShieldCheck,
@@ -128,136 +127,28 @@ const FOOTER_LINKS = [
     },
 ];
 
-const DECK_WORDS = [
-    {
-        word: "Serendipity",
-        partOfSpeech: "noun",
-        source: "Cinema · Good Will Hunting",
-        definition: "Finding something good without looking for it.",
-        trick: "Serene discovery: a calm, lucky find.",
-    },
-    {
-        word: "Gaslight",
-        partOfSpeech: "verb",
-        source: "Cinema · Gaslight (1944)",
-        definition:
-            "To make someone doubt their own memory or sense of what is real.",
-        trick: "In the film, a husband dims the gas lamps and swears nothing changed.",
-    },
-    {
-        word: "Ephemeral",
-        partOfSpeech: "adjective",
-        source: "Music · a song lyric",
-        definition: "Lasting for only a very short time.",
-        trick: "Like a mayfly: here today, gone tomorrow.",
-    },
-    {
-        word: "Rizz",
-        partOfSpeech: "noun",
-        source: "Slang · a podcast",
-        definition: "The ability to charm or attract someone.",
-        trick: "It's the middle of chaRISma.",
-    },
-];
-
-/** How long each card stays on top before the deck moves on. */
-const DECK_INTERVAL_MS = 6000;
-
-/**
- * A stack of word cards that deals itself every few seconds. Hovering or
- * focusing it pauses the deck so the card can be read, and with reduced
- * motion it does not move on at all.
- */
-function WordDeck() {
-    const [index, setIndex] = React.useState(0);
-    const [paused, setPaused] = React.useState(false);
-    const current = DECK_WORDS[index];
-
-    React.useEffect(() => {
-        if (paused) return;
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            return;
-        }
-        const timer = window.setTimeout(
-            () => setIndex((i) => (i + 1) % DECK_WORDS.length),
-            DECK_INTERVAL_MS,
-        );
-        return () => window.clearTimeout(timer);
-    }, [index, paused]);
-
-    return (
-        <div
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-            onFocus={() => setPaused(true)}
-            onBlur={() => setPaused(false)}
-        >
-            {/* The stack: two cards fanned out behind the live one. */}
-            <div className="relative">
-                <div
-                    aria-hidden
-                    className="absolute inset-0 -translate-x-4 translate-y-4 -rotate-3 rounded-3xl border border-primary/40 bg-card/80 shadow-sm"
-                />
-                <div
-                    aria-hidden
-                    className="absolute inset-0 -translate-x-2 translate-y-2 rotate-[-1.5deg] rounded-3xl border border-primary/70 bg-card/90 shadow-sm"
-                />
-
-                <div className="relative flex min-h-60 flex-col rounded-3xl border border-primary bg-card p-6 text-left shadow-[0_20px_40px_-20px_oklch(0.3_0.06_150/0.4)] sm:p-7">
-                    <div
-                        key={current.word}
-                        className="flex flex-1 flex-col animate-in fade-in-0 slide-in-from-right-3 duration-500"
-                    >
-                        <div className="flex items-center justify-between gap-3">
-                            <span className="text-xs font-medium text-muted-foreground">
-                                {current.source}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => speakWord(current.word)}
-                                aria-label={`Hear ${current.word} pronounced`}
-                                title="Hear it"
-                                className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-accent-ink transition-colors hover:bg-primary/15 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                            >
-                                <Volume2 className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <h3 className="mt-5 text-3xl font-extrabold tracking-tight">
-                            {current.word}{" "}
-                            <span className="text-sm font-medium text-muted-foreground italic">
-                                {current.partOfSpeech}
-                            </span>
-                        </h3>
-                        <p className="mt-2 text-base leading-relaxed text-foreground/90">
-                            {current.definition}
-                        </p>
-
-                        <p className="mt-auto flex items-start gap-2 pt-6 text-xs text-muted-foreground">
-                            <Sparkles className="mt-px h-3.5 w-3.5 shrink-0 text-accent-ink" />
-                            <span>
-                                <span className="font-semibold text-foreground">
-                                    Memory trick:
-                                </span>{" "}
-                                {current.trick}
-                            </span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 export function LandingPage() {
+    const storyRef = React.useRef<HTMLOListElement>(null);
+    const [activeStep, setActiveStep] = React.useState(0);
+    React.useEffect(() => {
+        const steps = storyRef.current?.querySelectorAll<HTMLElement>("[data-story-step]");
+        if (!steps) return;
+        const observer = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) setActiveStep(Number((entry.target as HTMLElement).dataset.storyStep));
+            }
+        }, { rootMargin: "-35% 0px -35% 0px", threshold: 0 });
+        steps.forEach((step) => observer.observe(step));
+        return () => observer.disconnect();
+    }, []);
     return (
-        <div className="flex min-h-screen flex-col text-foreground selection:bg-primary selection:text-primary-foreground">
+        <div className="relative min-h-screen text-foreground selection:bg-primary selection:text-primary-foreground">
             {/* ---------------- Navigation ---------------- */}
             {/* A floating pill rather than a full-width strip. The outer nav
                 is only spacing, so it lets clicks through to the page; the
                 hero tucks up underneath it so the photo shows around the
                 pill instead of stopping at a band of plain background. */}
-            <nav className="pointer-events-none sticky top-0 z-30 px-3 pt-3 sm:px-4 sm:pt-4">
+            <nav className="pointer-events-none absolute inset-x-0 top-0 z-30 px-3 pt-3 sm:px-4 sm:pt-4">
                 {/* From md up, equal outer columns keep the section links on
                     the true centre line, whatever the widths of the logo and
                     buttons. Below that there are no links to centre, and equal
@@ -325,8 +216,9 @@ export function LandingPage() {
                 </div>
             </nav>
 
+            <main>
             {/* ---------------- Hero ---------------- */}
-            <section className="relative isolate -mt-18 overflow-hidden px-4 pt-34 pb-16 md:pt-42 md:pb-24">
+            <section className="relative isolate px-4 pt-32 pb-20 md:pt-40 md:pb-28">
                 {/* ---- Backdrop ----
                     The same misty forest as the footer banner, earlier in the
                     morning: the page opens and closes in one place. The photo
@@ -417,54 +309,38 @@ export function LandingPage() {
                     </div>
                 </div>
 
-                {/* Live preview: a small deck of word cards */}
-                <div className="mx-auto mt-14 max-w-md">
-                    <p className="mb-5 text-center text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                        A word, the way Leword saves it
-                    </p>
-                    {/* <WordDeck /> */}
-                </div>
             </section>
 
             {/* ---------------- How it works ---------------- */}
-            <section
-                id="how-it-works"
-                className="scroll-mt-20 border-t border-b bg-muted/30 px-4 py-20"
-            >
-                <div className="mx-auto max-w-5xl space-y-12">
-                    <div className="space-y-3 text-center">
-                        <p className="text-xs font-semibold tracking-wider text-accent-ink uppercase">
-                            How it works
-                        </p>
-                        <h2 className="text-3xl font-extrabold tracking-tight">
-                            Three steps, start to finish.
-                        </h2>
-                        <p className="mx-auto max-w-lg text-sm text-muted-foreground sm:text-base">
-                            Saving a word has to be quick, or you will not
-                            bother. That moment right after you hear it is when
-                            most words slip away.
-                        </p>
+            <section id="how-it-works" className="scroll-mt-24 bg-muted/30 px-5">
+                <div className="story-layout mx-auto max-w-5xl">
+                    <div className="story-companion">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-accent-ink">How it works</p>
+                        <h2 className="mt-4 max-w-xs text-3xl font-extrabold sm:text-4xl">A little practice.<br />A word that stays.</h2>
+                        <div className="story-bird" aria-hidden="true">
+                            <div className="story-halo" />
+                            <Parrot state={activeStep === 2 ? "cheer" : "idle"} size={260} perch />
+                        </div>
+                        <div className="flex items-center gap-3" aria-label={`Step ${activeStep + 1} of 3`}>
+                            {STEPS.map((step, index) => (
+                                <a key={step.title} href={`#story-step-${index}`} aria-label={step.title} aria-current={activeStep === index ? "step" : undefined} className="story-progress" />
+                            ))}
+                            <span className="ml-2 text-xs text-muted-foreground">0{activeStep + 1} / 03</span>
+                        </div>
                     </div>
-
-                    <ol className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                        {STEPS.map(({ icon: Icon, title, body }, i) => (
-                            <li key={title}>
-                                <Card className={`h-full rounded-3xl ring-0 ${SURFACE}`}>
-                                    <CardContent className="space-y-3 p-6">
-                                        <div className="flex items-center gap-3">
-                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                                                {i + 1}
-                                            </span>
-                                            {/* <Icon className="h-5 w-5 text-accent-ink" /> */}
-                                        </div>
-                                        <h3 className="text-lg font-bold">
-                                            {title}
-                                        </h3>
-                                        <p className="text-sm leading-relaxed text-muted-foreground">
-                                            {body}
-                                        </p>
-                                    </CardContent>
-                                </Card>
+                    <ol ref={storyRef} className="story-chapters">
+                        {STEPS.map(({ icon: Icon, title, body }, index) => (
+                            <li key={title} id={`story-step-${index}`} data-story-step={index} data-active={activeStep === index} className="story-chapter">
+                                <div className="flex items-center gap-3 text-accent-ink">
+                                    <Icon className="h-5 w-5" />
+                                    <span className="text-xs font-semibold uppercase tracking-widest">Step 0{index + 1}</span>
+                                </div>
+                                <h3 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h3>
+                                <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground">{body}</p>
+                                <p className="mt-5 text-sm font-medium text-accent-ink">
+                                    {index === 0 ? "From a passing moment to your own collection." : index === 1 ? "Meaning, context, and a little memory trick." : "Hear it. Say it. Keep it."}
+                                </p>
+                                {index === 2 && <Link href="/auth" className="mt-8 inline-block"><Button className="gap-2 rounded-full">Save your first word <ArrowRight className="h-4 w-4" /></Button></Link>}
                             </li>
                         ))}
                     </ol>
@@ -513,7 +389,7 @@ export function LandingPage() {
             {/* ---------------- Why a parrot ---------------- */}
             <section
                 id="why-a-parrot"
-                className="scroll-mt-20 border-t border-b bg-muted/30 px-4 py-20"
+                className="scroll-mt-20 bg-muted/30 px-4 py-20"
             >
                 <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-2">
                     <div className="order-2 space-y-5 md:order-1">
@@ -548,7 +424,7 @@ export function LandingPage() {
             {/* ---------------- FAQ ---------------- */}
             <section
                 id="faq"
-                className="scroll-mt-20 border-t bg-muted/30 px-4 py-20"
+                className="scroll-mt-20 bg-muted/30 px-4 py-20"
             >
                 <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] md:gap-14">
                     {/* The heading column sticks while the answers scroll, so
@@ -600,7 +476,7 @@ export function LandingPage() {
             </section>
 
             {/* ---------------- Final call to action ---------------- */}
-            <section className="border-t px-4 py-20">
+            <section className="px-4 py-20">
                 <div className="mx-auto max-w-xl space-y-6 text-center">
                     {/* No mascot here any more: the footer banner directly
                         below is a photograph full of parrots, and the flat
@@ -741,6 +617,7 @@ export function LandingPage() {
                     </div>
                 </div>
             </footer>
+            </main>
         </div>
     );
 }
