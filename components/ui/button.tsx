@@ -45,18 +45,19 @@ function Button({
   variant = "default",
   size = "default",
   children,
+  parrotPeek = false,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { parrotPeek?: boolean }) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn("parrot-button", buttonVariants({ variant, size, className }))}
+      className={cn(parrotPeek && "parrot-button", buttonVariants({ variant, size, className }))}
       {...props}
     >
       {children}
-      <span className="button-parrot" aria-hidden="true">
+      {parrotPeek && <span className="button-parrot" aria-hidden="true">
         <ButtonParrot />
-      </span>
+      </span>}
     </ButtonPrimitive>
   )
 }

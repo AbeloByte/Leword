@@ -122,7 +122,7 @@ export function WordCard({
 
                 {/* Context sentence where the user saw it */}
                 {word.context_sentence && (
-                    <blockquote className="rounded-r-md border-l-2 border-border bg-muted/40 px-3 py-2 text-xs italic text-muted-foreground">
+                    <blockquote className="rounded-r-md border-l-[3px] border-accent-ink bg-muted/40 px-4 py-3 text-xs leading-relaxed italic text-muted-foreground">
                         &ldquo;{word.context_sentence}&rdquo;
                     </blockquote>
                 )}

@@ -197,7 +197,7 @@ export function LandingPage() {
                             </Button>
                         </Link>
                         <Link href="/auth">
-                            <Button
+                            <Button parrotPeek
                                 size="sm"
                                 className="gap-1 rounded-full text-sm font-medium"
                             >
@@ -268,7 +268,7 @@ export function LandingPage() {
 
                         <div className="flex flex-col items-center justify-center gap-3 pt-4 sm:flex-row">
                             <Link href="/auth" className="w-full sm:w-auto">
-                                <Button
+                                <Button parrotPeek
                                     size="lg"
                                     className="w-full gap-2 rounded-full px-8 font-semibold sm:w-auto"
                                 >
@@ -280,7 +280,7 @@ export function LandingPage() {
                                 href="#how-it-works"
                                 className="w-full sm:w-auto"
                             >
-                                <Button
+                                <Button parrotPeek
                                     size="lg"
                                     variant="outline"
                                     className={`w-full gap-2 rounded-full px-8 font-semibold sm:w-auto ${SURFACE}`}
@@ -597,7 +597,7 @@ export function LandingPage() {
                             the first word you hear today.
                         </p>
                         <Link href="/auth" className="inline-block">
-                            <Button
+                            <Button parrotPeek
                                 size="lg"
                                 className="gap-2 rounded-full px-8 font-semibold"
                             >
