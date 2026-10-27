@@ -206,6 +206,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  :where(button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]):not(:disabled):not([aria-disabled="true"]):not([data-disabled]) {
+    cursor: pointer;
+  }
   body {
     @apply bg-background text-foreground;
     /* Fine paper grain only. A ruled grid was tried here and removed: it
@@ -548,27 +551,57 @@
 }
 
 
-/* The mascot stays beside the three chapters while the document scrolls. */
-.story-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; position: relative; }
-.story-companion { position: sticky; top: 5rem; align-self: start; min-height: calc(100svh - 5rem); display: flex; flex-direction: column; justify-content: center; padding-block: 3rem; }
-.story-bird { position: relative; display: grid; place-items: center; width: 300px; max-width: 100%; margin-block: 2rem; }
-.story-halo { position: absolute; inset: 8%; border-radius: 50%; background: radial-gradient(circle, color-mix(in oklab, var(--primary) 22%, transparent), transparent 72%); }
-.story-bird > svg { position: relative; max-width: 100%; }
-.story-chapter { min-height: 90svh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding-block: 5rem; scroll-margin-top: 5rem; opacity: 0.4; transition: opacity 450ms ease; }
-.story-chapter[data-active="true"], .story-chapter:focus-within { opacity: 1; }
-.story-progress { height: 4px; width: 2.5rem; border-radius: 99px; background: var(--border); transition: background-color 300ms; }
-.story-progress[aria-current] { background: var(--accent-ink); }
-.story-progress:focus-visible { outline: 2px solid var(--ring); outline-offset: 5px; }
-@media (max-width: 767px) {
-  .story-layout { display: block; }
-  .story-companion { top: 0; z-index: 10; min-height: auto; padding-block: 1rem; background: var(--background); }
-  .story-companion h2 { font-size: 1.25rem; max-width: 65%; }
-  .story-companion h2 br { display: none; }
-  .story-bird { position: absolute; right: 0; top: 0.5rem; width: 100px; margin: 0; }
-  .story-bird > svg { width: 100px; height: 100px; }
-  .story-companion > div:last-child { margin-top: 1rem; }
-  .story-chapter { min-height: 75svh; padding-block: 4rem; scroll-margin-top: 11rem; opacity: 1; }
+.section-heading {
+  @apply font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl;
 }
-@media (prefers-reduced-motion: reduce) {
-  .story-chapter { opacity: 1; transition: none; }
+
+.parrot-button {
+  position: relative;
 }
+.button-parrot {
+  position: absolute;
+  bottom: calc(100% - 5px);
+  left: 2px;
+  width: 42px;
+  height: 42px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(12px) rotate(-14deg) scale(0.75);
+  transform-origin: bottom center;
+  transition: opacity 160ms ease, transform 220ms ease;
+  z-index: 10;
+}
+.parrot-button .button-parrot > svg.button-parrot-art {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 12%));
+}
+.button-parrot[data-position="top-center"] {
+  left: calc(50% - 21px);
+}
+.button-parrot[data-position="top-right"] {
+  left: auto;
+  right: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .parrot-button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):hover > .button-parrot {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+.parrot-button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):focus-visible > .button-parrot {
+  opacity: 1;
+  transform: translateY(0) rotate(0) scale(1);
+}
+
+/* Three compact product previews keep the whole process in one view. */
+.how-preview {
+  padding: 10px;
+  border-radius: 1.75rem;
+  background-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.18'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+.how-preview-2 { background-color: color-mix(in oklab, var(--primary) 72%, var(--foreground)); }
+.how-preview-3 { background-color: var(--accent-ink); }
+.how-preview-window { display: flex; flex-direction: column; min-height: 265px; overflow: hidden; border-radius: 1.15rem; background: var(--background); color: var(--foreground); }

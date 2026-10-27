@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Parrot, useSpeakingWord } from "@/components/Parrot";
 import { toast } from "sonner";
-import { Plus, Search, Loader2, Lightbulb, Wand2, Check } from "lucide-react";
+import { Plus, Search, Loader2, Lightbulb, TextSearch, Check } from "lucide-react";
 
 interface AddWordDialogProps {
     /** Called with the new row's id so the page can scroll to it. */
@@ -271,7 +271,7 @@ export function AddWordDialog({ onWordAdded }: AddWordDialogProps) {
                                 {aiLoading ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                    <Wand2 className="h-4 w-4" />
+                                    <TextSearch className="h-4 w-4" />
                                 )}
                                 {aiLoading ? "Working…" : "Explain this word"}
                             </Button>
