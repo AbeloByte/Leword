@@ -206,6 +206,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  :where(button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]):not(:disabled):not([aria-disabled="true"]):not([data-disabled]) {
+    cursor: pointer;
+  }
   body {
     @apply bg-background text-foreground;
     /* Fine paper grain only. A ruled grid was tried here and removed: it
@@ -546,3 +549,59 @@
   --accent-ink: oklch(0.46 0.13 var(--brand-h));
   background-color: oklch(1 0 0 / 92%);
 }
+
+
+.section-heading {
+  @apply font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl;
+}
+
+.parrot-button {
+  position: relative;
+}
+.button-parrot {
+  position: absolute;
+  bottom: calc(100% - 5px);
+  left: 2px;
+  width: 42px;
+  height: 42px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(12px) rotate(-14deg) scale(0.75);
+  transform-origin: bottom center;
+  transition: opacity 160ms ease, transform 220ms ease;
+  z-index: 10;
+}
+.parrot-button .button-parrot > svg.button-parrot-art {
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 12%));
+}
+.button-parrot[data-position="top-center"] {
+  left: calc(50% - 21px);
+}
+.button-parrot[data-position="top-right"] {
+  left: auto;
+  right: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .parrot-button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):hover > .button-parrot {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+.parrot-button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):focus-visible > .button-parrot {
+  opacity: 1;
+  transform: translateY(0) rotate(0) scale(1);
+}
+
+/* Three compact product previews keep the whole process in one view. */
+.how-preview {
+  padding: 10px;
+  border-radius: 1.75rem;
+  background-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.18'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+.how-preview-2 { background-color: color-mix(in oklab, var(--primary) 72%, var(--foreground)); }
+.how-preview-3 { background-color: var(--accent-ink); }
+.how-preview-window { display: flex; flex-direction: column; min-height: 265px; overflow: hidden; border-radius: 1.15rem; background: var(--background); color: var(--foreground); }

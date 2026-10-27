@@ -5,7 +5,7 @@ import { useProgress } from "@/context/ProgressContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, ChevronRight } from "lucide-react";
+import { Trophy, ChevronRight } from "lucide-react";
 import { XP } from "@/lib/xp";
 import { RankIcon } from "@/components/RankIcon";
 
@@ -108,7 +108,7 @@ export function RankProgress() {
                         onClick={() => setRanksOpen(true)}
                         className="-mr-2 h-8 gap-1 text-xs font-medium text-accent-ink hover:text-accent-ink"
                     >
-                        <Sparkles className="h-3.5 w-3.5" />
+                        <Trophy className="h-3.5 w-3.5" />
                         Ranks &amp; themes
                         <ChevronRight className="h-3.5 w-3.5" />
                     </Button>
