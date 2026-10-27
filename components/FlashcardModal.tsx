@@ -332,7 +332,7 @@ export function FlashcardModal({
                                         </p>
 
                                         {currentWord.context_sentence && (
-                                            <blockquote className="rounded-r border-l-2 border-border bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground italic">
+                                            <blockquote className="rounded-r-md border-l-[3px] border-accent-ink bg-muted/40 px-4 py-3 text-xs leading-relaxed text-muted-foreground italic">
                                                 &ldquo;
                                                 {currentWord.context_sentence}
                                                 &rdquo;
