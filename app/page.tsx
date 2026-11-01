@@ -30,7 +30,6 @@ import { toast } from "sonner";
 import { UserNav } from "@/components/UserNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { RankBadge } from "@/components/RankBadge";
 import { RankProgress } from "@/components/RankProgress";
 import { RanksDialog } from "@/components/RanksDialog";
 import { useReportWordStats } from "@/context/ProgressContext";
@@ -322,21 +321,9 @@ export default function HomePage() {
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
                     <div className="flex min-w-0 items-center gap-2.5">
                         <LogoMark className="nav-logo" />
-                        <div className="min-w-0">
-                            <h1 className="text-lg leading-tight font-bold">
-                                Leword
-                            </h1>
-                            {fetchingWords ? (
-                                <Skeleton className="mt-1 h-3 w-24" />
-                            ) : (
-                                <p className="text-xs text-muted-foreground">
-                                    {words.length}{" "}
-                                    {words.length === 1 ? "word" : "words"}{" "}
-                                    collected
-                                </p>
-                            )}
-                            <RankBadge />
-                        </div>
+                        <h1 className="text-lg leading-tight font-bold">
+                            Leword
+                        </h1>
                     </div>
 
                     {/* Actions: Flashcards, Add Word, Theme, and User Profile */}
@@ -622,14 +609,14 @@ export default function HomePage() {
                         aria-label="Daily word and learning progress"
                         className="contents lg:sticky lg:top-28 lg:block lg:min-w-0 lg:space-y-5"
                     >
-                        <div className="order-2 space-y-3">
+                        <div className="order-first space-y-3">
                             <h2 className="text-sm font-semibold text-muted-foreground">
                                 Your next milestone
                             </h2>
                             <RankProgress />
                         </div>
                         {!fetchingWords && words.length > 0 && (
-                            <div className="order-first min-w-0">
+                            <div className="order-none min-w-0">
                                 <WordOfTheDay words={words} />
                             </div>
                         )}
