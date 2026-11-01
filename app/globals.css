@@ -74,9 +74,11 @@
 
   --background: oklch(0.977 0.004 150);
   --foreground: oklch(0.19 0.01 150);
-  --card: oklch(1 0 0);
+  /* Cards sit a step lighter than the page on a soft green-tinted paper,
+     not pure white, which glared against the off-white ground. */
+  --card: oklch(0.987 0.008 140);
   --card-foreground: oklch(0.19 0.01 150);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.987 0.008 140);
   --popover-foreground: oklch(0.19 0.01 150);
   --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
   --primary-foreground: oklch(0.2 0.03 var(--brand-h));

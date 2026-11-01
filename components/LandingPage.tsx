@@ -222,10 +222,13 @@ export function LandingPage() {
                     light mode. In dark mode it is darkened rather than faded:
                     fading pale mist over a dark page only leaves grey haze,
                     while dimming it turns the mist into shadow and keeps the
-                    leaves green, like the footer at dusk. */}
+                    leaves green, like the footer at dusk.
+                    The photo is masked out at the bottom rather than covered
+                    with a flat scrim, so the body's paper grain shows through
+                    and there is no seam where the photo ends. */}
                     <div
                         aria-hidden
-                        className="absolute inset-x-0 top-0 -z-10 h-184 md:h-216"
+                        className="absolute inset-x-0 top-0 -z-10 h-184 mask-[linear-gradient(to_bottom,black_80%,transparent)] md:h-216"
                     >
                         <Image
                             src="/Images/hero-forest.png"
@@ -236,7 +239,6 @@ export function LandingPage() {
                             fetchPriority="high"
                             className="object-cover object-center dark:brightness-[0.32] dark:saturate-[1.5] dark:contrast-[1.2]"
                         />
-                        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent via-75% to-background" />
                     </div>
 
                     <div className="mx-auto max-w-4xl space-y-6 text-center">
@@ -613,67 +615,50 @@ export function LandingPage() {
                 </section>
 
                 {/* ---------------- Footer ----------------
-                The banner photo and the link tier share one ink colour, set
-                once on the <footer> below: the scrim fades into exactly that
-                value, so the picture and the bar read as a single block
-                instead of a photo sitting on top of a strip. The ink is a
-                fixed dark in both themes -- a photograph does not invert, and
-                a footer built around one should not either. */}
-                <footer
-                    className="mt-auto"
-                    style={
-                        {
-                            "--footer-ink": "oklch(0.17 0.02 150)",
-                        } as React.CSSProperties
-                    }
-                >
+                The footer follows the theme like the rest of the page: the
+                banner photo is masked out at both ends rather than covered by
+                a scrim, and nothing below it paints a background, so the
+                photo and the link tier both sit on the body's own colour and
+                paper grain -- one ground from the page down, with no seams. */}
+                <footer className="mt-auto">
                     {/* ---- Banner band ----
                     The photo puts its parrots in the left and right thirds and
                     leaves a bright, near-empty valley up the middle. That
-                    middle is the worst place for white text and the best place
-                    for nothing, so the closing line runs along the bottom
-                    instead, where the scrim is fully opaque -- and every bird
+                    middle is the worst place for text and the best place for
+                    nothing, so the closing line runs along the bottom instead,
+                    where the photo has faded into the page -- and every bird
                     stays uncovered.
                     The photo is about 5:2, so the band grows with the width
                     (up to 36rem) instead of capping early: a short, wide band
                     cropped the birds at the top. What crop remains comes off
-                    the bottom, which the scrim covers anyway. */}
+                    the bottom, which fades out anyway. */}
                     <div className="relative isolate flex h-[clamp(16rem,40vw,36rem)] items-end overflow-hidden">
                         <Image
                             src="/Images/footer.png"
                             alt="Green Amazon parrots perched on mossy branches and in flight above a misty rainforest valley"
                             fill
                             sizes="100vw"
-                            className="object-cover"
+                            className="object-cover mask-[linear-gradient(to_bottom,transparent,rgb(0_0_0/0.2)_10%,rgb(0_0_0/0.6)_22%,black_36%,black_55%,rgb(0_0_0/0.45)_70%,transparent_84%)] dark:brightness-[0.8]"
                             style={{ objectPosition: "center 15%" }}
                         />
-
-                        {/* A short fade from the page into the photo, so the band
-                        starts softly instead of on a hard cut line. */}
-                        <div
-                            aria-hidden
-                            className="absolute inset-x-0 top-0 h-12 bg-linear-to-b from-background to-transparent sm:h-16"
-                        />
-
-                        {/* Scrim: solid at the foot, gone by just past halfway. */}
-                        <div
-                            aria-hidden
-                            className="absolute inset-0 bg-linear-to-t from-[var(--footer-ink)] from-20% via-[var(--footer-ink)]/55 via-52% to-transparent"
-                        />
+                        {/* Both fades are long and eased: the bright mist up the
+                        middle meets a dark page in dark mode, where a short
+                        fade reads as an edge. Dimming the photo a little there
+                        narrows the gap further. */}
 
                         {/* The page opens on this line in the nav badge and closes
                         on it here. */}
-                        <p className="relative z-10 w-full px-4 pb-8 text-center text-2xl font-extrabold tracking-tight text-white sm:pb-10 sm:text-3xl">
+                        <p className="relative z-10 w-full px-4 pb-8 text-center text-2xl font-extrabold tracking-tight text-foreground sm:pb-10 sm:text-3xl">
                             Hear it. Say it.{" "}
                             <span className="marker">Keep it.</span>
                         </p>
                     </div>
 
                     {/* ---- Link tier ----
-                    No top border: the scrim has already landed on this exact
-                    colour, and a rule across the seam would put a line where
-                    the eye reads continuous ground. */}
-                    <div className="bg-[var(--footer-ink)] px-4 pt-12 pb-8 text-white">
+                    No background and no top border: the photo has already
+                    faded into the page here, and a rule across that join would
+                    put a line where the eye reads continuous ground. */}
+                    <div className="px-4 pt-12 pb-8 text-foreground">
                         <div className="mx-auto max-w-5xl">
                             <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
                                 {/* Brand column, wider than the link columns. */}
@@ -682,12 +667,12 @@ export function LandingPage() {
                                         href="/"
                                         className="flex w-fit items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
                                     >
-                                        <LogoMark onDark />
+                                        <LogoMark />
                                         <span className="text-xl font-bold tracking-tight">
                                             Leword
                                         </span>
                                     </Link>
-                                    <p className="max-w-xs text-sm leading-relaxed text-white/65">
+                                    <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
                                         A home for the words you hear and mean
                                         to remember. Save them, hear them, and
                                         come back to them until they stick.
@@ -696,7 +681,7 @@ export function LandingPage() {
 
                                 {FOOTER_LINKS.map(({ heading, links }) => (
                                     <div key={heading} className="space-y-3">
-                                        <h3 className="text-xs font-semibold tracking-wider text-white/50 uppercase">
+                                        <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                                             {heading}
                                         </h3>
                                         <ul className="space-y-2">
@@ -704,7 +689,7 @@ export function LandingPage() {
                                                 <li key={label}>
                                                     <Link
                                                         href={href}
-                                                        className="text-sm text-white/75 transition-colors hover:text-[var(--primary)]"
+                                                        className="text-sm text-foreground/75 transition-colors hover:text-accent-ink"
                                                     >
                                                         {label}
                                                     </Link>
@@ -715,15 +700,15 @@ export function LandingPage() {
                                 ))}
                             </div>
 
-                            <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row">
-                                <p className="text-xs text-white/50">
+                            <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row">
+                                <p className="text-xs text-muted-foreground">
                                     &copy; {new Date().getFullYear()} Leword.
                                     For film lovers, avid readers, and anyone
                                     who collects good words.
                                 </p>
                                 <a
                                     href="#top"
-                                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:border-white/50 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-foreground/25 px-4 py-2 text-sm font-medium text-foreground/80 transition-colors hover:border-foreground/50 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                                 >
                                     Back to top
                                     <ArrowUp
