@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import {
@@ -23,7 +24,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { User, LogOut, Settings, Loader2, Trophy } from "lucide-react";
+import {
+    User,
+    LogOut,
+    Settings,
+    Loader2,
+    Trophy,
+    ShieldCheck,
+} from "lucide-react";
 import { useProgress } from "@/context/ProgressContext";
 import { RankIcon } from "@/components/RankIcon";
 import {
@@ -34,8 +42,31 @@ import {
 } from "@/components/profile-avatar";
 
 export function UserNav() {
-    const { user, signOut } = useAuth();
+    const { user, session, signOut } = useAuth();
     const { standing, pending, setRanksOpen } = useProgress();
+    const router = useRouter();
+
+    // Only the server knows who the admins are; ask once per signed-in user.
+    const [isAdmin, setIsAdmin] = useState(false);
+    const userId = user?.id;
+    const token = session?.access_token;
+    useEffect(() => {
+        if (!userId || !token) return;
+        let cancelled = false;
+        fetch("/api/admin/check", {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((res) => (res.ok ? res.json() : { admin: false }))
+            .then((body: { admin?: boolean }) => {
+                if (!cancelled) setIsAdmin(!!body.admin);
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+        // The token rotates on refresh; re-asking for the same user is waste.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId]);
     const [profileOpen, setProfileOpen] = useState(false);
     const [signOutOpen, setSignOutOpen] = useState(false);
 
@@ -158,6 +189,16 @@ export function UserNav() {
                         <Settings className="h-4 w-4" />
                         Profile Settings
                     </DropdownMenuItem>
+
+                    {isAdmin && (
+                        <DropdownMenuItem
+                            className="cursor-pointer gap-2 text-xs font-medium py-2 px-2.5 rounded-sm hover:bg-muted"
+                            onClick={() => router.push("/admin")}
+                        >
+                            <ShieldCheck className="h-4 w-4" />
+                            Admin
+                        </DropdownMenuItem>
+                    )}
 
                     <DropdownMenuSeparator />
 
